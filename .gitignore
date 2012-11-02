@@ -1,0 +1,8 @@
+dumb-alloc
+*.a
+*.d
+*.o
+*.swp
+*.sym
+*~
+.gdbinit
