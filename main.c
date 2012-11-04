@@ -95,6 +95,7 @@ char test_out_of_memmory(void)
 	char *mem1;
 	char *mem2;
 	char *mem3;
+	char *mem4;
 
 	printf("test_out_of_memmory ...");
 
@@ -103,9 +104,10 @@ char test_out_of_memmory(void)
 	mem1 = (char *)dumb_malloc(BIG_ALLOC);
 	mem2 = (char *)dumb_malloc(BIG_ALLOC);
 	mem3 = (char *)dumb_malloc(BIG_ALLOC);
+	mem4 = (char *)dumb_malloc(BIG_ALLOC);
 
-	if (mem3 != NULL) {
-		printf("\n\texpected NULL but was %p\n", mem3);
+	if (mem4 != NULL) {
+		printf("\n\texpected NULL but was %p\n", mem4);
 		dumb_alloc_dump_context(dumb_alloc_get_global_context());
 		printf("FAIL\n");
 		return 1;
@@ -115,6 +117,7 @@ char test_out_of_memmory(void)
 	dumb_free(mem1);
 	dumb_free(mem2);
 	dumb_free(mem3);
+	dumb_free(mem4);
 	printf(".\n");
 	return 0;
 }
@@ -169,8 +172,8 @@ char test_checkered_alloc(void)
 	for (i = 0; i < 10; i++) {
 		pointers[i] = dumb_malloc(100);
 		if (!pointers[i]) {
-			printf("expected a pointer for %i\n", i);
-			printf("FAIL");
+			printf("1) expected a pointer for %i\n", i);
+			printf("FAIL\n");
 			return 1;
 		}
 		for (j = 0; j < 100; j++) {
@@ -183,8 +186,8 @@ char test_checkered_alloc(void)
 	for (i = 1; i < 10; i += 2) {
 		pointers[i] = dumb_malloc(90);
 		if (!pointers[i]) {
-			printf("expected a pointer for %i\n", i);
-			printf("FAIL");
+			printf("2) expected a pointer for %i\n", i);
+			printf("FAIL\n");
 			return 1;
 		}
 		for (j = 0; j < 90; j++) {
