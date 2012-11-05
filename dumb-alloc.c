@@ -118,6 +118,7 @@ void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
+	size_t needed;
 
 	if (!ctx) {
 		return NULL;
@@ -134,7 +135,21 @@ void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
 			}
 		}
 	}
-	/* TODO : allocate another block */
+	needed =
+	    request + sizeof(struct dumb_alloc_block) +
+	    sizeof(struct dumb_alloc_chunk);
+	if (DUMB_ALLOC_REGION_TWO_SIZE >= needed
+	    && ctx->block->next_block == NULL) {
+		block = (struct dumb_alloc_block *)global_memory_region_two;
+		_init_block(global_memory_region_two,
+			    DUMB_ALLOC_REGION_TWO_SIZE, 0);
+		ctx->block->next_block = block;
+		chunk = block->first_chunk;
+		_split_chunk(chunk, request);
+		chunk->in_use = 1;
+		return chunk->start;
+	}
+
 	return NULL;
 }
 
