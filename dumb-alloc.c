@@ -171,6 +171,36 @@ void _chunk_join_next(struct dumb_alloc_chunk *chunk)
 	chunk->available_length += additional_available_length;
 }
 
+char _chunks_in_use(struct dumb_alloc_block *block)
+{
+	struct dumb_alloc_chunk *chunk;
+
+	if(!block) {
+		return 0;
+	}
+	for (chunk = block->first_chunk; chunk != NULL; chunk = chunk->next) {
+		if (chunk->in_use) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void _release_unused_block(struct dumb_alloc_context *ctx)
+{
+	struct dumb_alloc_block *block;
+	struct dumb_alloc_block *block_prev;
+
+	block = ctx->block;
+	while (block != NULL) {
+		block_prev = block;
+		block = block->next_block;
+		if (block && !_chunks_in_use(block)) {
+			block_prev->next_block = block->next_block;
+		}
+	}
+}
+
 void _da_free(struct dumb_alloc_context *ctx, void *ptr)
 {
 	struct dumb_alloc_block *block;
@@ -196,6 +226,7 @@ void _da_free(struct dumb_alloc_context *ctx, void *ptr)
 				for (i = 0; i < chunk->available_length; ++i) {
 					chunk->start[i] = 0;
 				}
+				_release_unused_block(ctx);
 				return;
 			}
 		}
