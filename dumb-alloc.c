@@ -41,19 +41,24 @@ void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
 	chunk->next = (struct dumb_alloc_chunk *)NULL;
 }
 
-void _init_block(struct dumb_alloc_block *block, char *memory,
-		 size_t region_size, size_t initial_overhead)
+void _init_block(char *memory, size_t region_size, size_t initial_overhead)
 {
+	struct dumb_alloc_block *block;
 	size_t block_available_length;
+
+	block =
+	    (struct dumb_alloc_block *)(((char *)memory) + initial_overhead);
 	block->region_start = memory;
 	block->total_length = region_size;
 	block->next_block = (struct dumb_alloc_block *)NULL;
 
 	block->first_chunk =
-	    (struct dumb_alloc_chunk *)(((char *)block)) +
-	    sizeof(struct dumb_alloc_block);
+	    (struct dumb_alloc_chunk *)(((char *)block) +
+					sizeof(struct dumb_alloc_block));
 
-	block_available_length = block->total_length - initial_overhead;
+	block_available_length =
+	    block->total_length - (initial_overhead +
+				   sizeof(struct dumb_alloc_block));
 	_init_chunk(block->first_chunk, block_available_length);
 }
 
@@ -63,9 +68,9 @@ void _init_global_context_one()
 	global_context->da_alloc = _da_alloc;
 	global_context->da_free = _da_free;
 	global_context->block =
-	    (struct dumb_alloc_block *)global_memory_region_one +
-	    sizeof(struct dumb_alloc_context);
-	_init_block(global_context->block, global_memory_region_one,
+	    (struct dumb_alloc_block *)(global_memory_region_one +
+					sizeof(struct dumb_alloc_context));
+	_init_block(global_memory_region_one,
 		    DUMB_ALLOC_REGION_ONE_SIZE,
 		    sizeof(struct dumb_alloc_context));
 }
