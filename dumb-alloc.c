@@ -202,16 +202,20 @@ void dumb_reset()
 
 void _dump_chunk(struct dumb_alloc_chunk *chunk, unsigned char deep)
 {
-	printf("chunk %p\n", (void *)chunk);
+	printf("chunk %p ( %llu )\n", (void *)chunk,
+	       (unsigned long long)((void *)chunk));
 	if (!chunk) {
 		return;
 	}
-	printf("\tstart: %p\n", (void *)chunk->start);
-	printf("\tavailable_length: %ul\n",
-	       (unsigned int)chunk->available_length);
+	printf("\tstart: %p ( %llu )\n", (void *)chunk->start,
+	       (unsigned long long)((void *)chunk->start));
+	printf("\tavailable_length: %llu\n",
+	       (unsigned long long)chunk->available_length);
 	printf("\tin_use: %d\n", chunk->in_use);
-	printf("\tprev: %p\n", (void *)chunk->prev);
-	printf("\tnext: %p\n", (void *)chunk->next);
+	printf("\tprev: %p ( %llu )\n", (void *)chunk->prev,
+	       (unsigned long long)((void *)chunk->prev));
+	printf("\tnext: %p ( %llu )\n", (void *)chunk->next,
+	       (unsigned long long)((void *)chunk->next));
 	if (deep && chunk->next) {
 		_dump_chunk(chunk->next, deep);
 	}
@@ -219,17 +223,22 @@ void _dump_chunk(struct dumb_alloc_chunk *chunk, unsigned char deep)
 
 void _dump_block(struct dumb_alloc_block *block, unsigned char deep)
 {
-	printf("block %p\n", (void *)block);
+	printf("block %p ( %llu )\n", (void *)block,
+	       (unsigned long long)((void *)block));
 	if (!block) {
 		return;
 	}
-	printf("\tregion_start: %p\n", (void *)block->region_start);
-	printf("\ttotal_length: %ul\n", (unsigned int)block->total_length);
-	printf("\tfirst_chunk: %p\n", (void *)block->first_chunk);
+	printf("\tregion_start: %p ( %llu )\n", (void *)block->region_start,
+	       (unsigned long long)((void *)block->region_start));
+	printf("\ttotal_length: %llu\n",
+	       (unsigned long long)block->total_length);
+	printf("\tfirst_chunk: %p ( %llu )\n", (void *)block->first_chunk,
+	       (unsigned long long)((void *)block->first_chunk));
 	if (deep && block->first_chunk) {
 		_dump_chunk(block->first_chunk, deep);
 	}
-	printf("\tnext_block: %p\n", (void *)block->next_block);
+	printf("\tnext_block: %p ( %llu )\n", (void *)block->next_block,
+	       (unsigned long long)((void *)block->next_block));
 	if (deep && block->next_block) {
 		_dump_block(block->next_block, deep);
 	}
@@ -237,11 +246,20 @@ void _dump_block(struct dumb_alloc_block *block, unsigned char deep)
 
 void _dump_context(struct dumb_alloc_context *ctx, unsigned char deep)
 {
-	printf("context %p\n", (void *)ctx);
+	printf("sizeof(struct dumb_alloc_context): %lu\n",
+	       sizeof(struct dumb_alloc_context));
+	printf("sizeof(struct dumb_alloc_block): %lu\n",
+	       sizeof(struct dumb_alloc_block));
+	printf("sizeof(struct dumb_alloc_chunk): %lu\n",
+	       sizeof(struct dumb_alloc_chunk));
+
+	printf("context %p ( %llu )\n", (void *)ctx,
+	       (unsigned long long)((void *)ctx));
 	if (!ctx) {
 		return;
 	}
-	printf("\tblock: %p\n", (void *)ctx->block);
+	printf("\tblock: %p ( %llu )\n", (void *)ctx->block,
+	       (unsigned long long)((void *)ctx->block));
 	if (deep && ctx->block) {
 		_dump_block(ctx->block, deep);
 	}
