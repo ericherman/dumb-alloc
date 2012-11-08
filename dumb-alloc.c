@@ -46,8 +46,7 @@ void _init_block(char *memory, size_t region_size, size_t initial_overhead)
 	struct dumb_alloc_block *block;
 	size_t block_available_length;
 
-	block =
-	    (struct dumb_alloc_block *)(((char *)memory) + initial_overhead);
+	block = (struct dumb_alloc_block *)(memory + initial_overhead);
 	block->region_start = memory;
 	block->total_length = region_size;
 	block->next_block = (struct dumb_alloc_block *)NULL;
@@ -107,8 +106,7 @@ void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 
 	from->available_length = request;
 	from->next =
-	    (struct dumb_alloc_chunk *)(((char *)(from->start)) +
-					from->available_length);
+	    (struct dumb_alloc_chunk *)(from->start + from->available_length);
 
 	_init_chunk(from->next, remaining_available_length);
 	from->next->prev = from;
@@ -175,7 +173,7 @@ char _chunks_in_use(struct dumb_alloc_block *block)
 {
 	struct dumb_alloc_chunk *chunk;
 
-	if(!block) {
+	if (!block) {
 		return 0;
 	}
 	for (chunk = block->first_chunk; chunk != NULL; chunk = chunk->next) {
