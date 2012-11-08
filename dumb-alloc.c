@@ -1,4 +1,4 @@
-#include "dumb-alloc.h"
+#include "dumb-alloc-private.h"
 #include <stdio.h>
 
 #define DUMB_ALLOC_REGION_ONE_SIZE 4096
@@ -66,8 +66,7 @@ void _init_global_context_one()
 	global_context = (struct dumb_alloc_context *)global_memory_region_one;
 	global_context->da_alloc = _da_alloc;
 	global_context->da_free = _da_free;
-	global_context->block =
-	    (struct dumb_alloc_block *)(global_memory_region_one +
+	global_context->data = (global_memory_region_one +
 					sizeof(struct dumb_alloc_context));
 	_init_block(global_memory_region_one,
 		    DUMB_ALLOC_REGION_ONE_SIZE,
@@ -114,6 +113,7 @@ void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 
 void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
 {
+	struct dumb_alloc_block *first_block;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
 	size_t needed;
@@ -121,7 +121,8 @@ void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
 	if (!ctx) {
 		return NULL;
 	}
-	for (block = ctx->block; block != NULL; block = block->next_block) {
+	block = (struct dumb_alloc_block *)ctx->data;
+	while (block != NULL) {
 		for (chunk = block->first_chunk; chunk != NULL;
 		     chunk = chunk->next) {
 			if (chunk->in_use == 0) {
@@ -132,16 +133,18 @@ void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
 				}
 			}
 		}
+		block = block->next_block;
 	}
 	needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
+	first_block = (struct dumb_alloc_block *)ctx->data;
 	if (DUMB_ALLOC_REGION_TWO_SIZE >= needed
-	    && ctx->block->next_block == NULL) {
+	    && first_block->next_block == NULL) {
 		block = (struct dumb_alloc_block *)global_memory_region_two;
 		_init_block(global_memory_region_two,
 			    DUMB_ALLOC_REGION_TWO_SIZE, 0);
-		ctx->block->next_block = block;
+		first_block->next_block = block;
 		chunk = block->first_chunk;
 		_split_chunk(chunk, request);
 		chunk->in_use = 1;
@@ -189,7 +192,7 @@ void _release_unused_block(struct dumb_alloc_context *ctx)
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_block *block_prev;
 
-	block = ctx->block;
+	block = (struct dumb_alloc_block *)ctx->data;
 	while (block != NULL) {
 		block_prev = block;
 		block = block->next_block;
@@ -208,7 +211,8 @@ void _da_free(struct dumb_alloc_context *ctx, void *ptr)
 	if (!ctx || !ptr) {
 		return;
 	}
-	for (block = ctx->block; block != NULL; block = block->next_block) {
+	block = (struct dumb_alloc_block *)ctx->data;
+	while (block != NULL) {
 		for (chunk = block->first_chunk; chunk != NULL;
 		     chunk = chunk->next) {
 			if (chunk->start == ptr) {
@@ -228,6 +232,7 @@ void _da_free(struct dumb_alloc_context *ctx, void *ptr)
 				return;
 			}
 		}
+		block = block->next_block;
 	}
 	/*
 	   printf("chunk for %p not found!\n", ptr);
@@ -307,9 +312,9 @@ void _dump_context(struct dumb_alloc_context *ctx, unsigned char deep)
 	if (!ctx) {
 		return;
 	}
-	printf("\tblock: %p ( %llu )\n", (void *)ctx->block,
-	       (unsigned long long)((void *)ctx->block));
-	if (deep && ctx->block) {
-		_dump_block(ctx->block, deep);
+	printf("\tblock: %p ( %llu )\n", ctx->data,
+	       (unsigned long long)ctx->data);
+	if (deep && ctx->data) {
+		_dump_block((struct dumb_alloc_block *)ctx->data, deep);
 	}
 }
