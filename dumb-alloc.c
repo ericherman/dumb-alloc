@@ -8,27 +8,22 @@
 char global_memory_region_one[DUMB_ALLOC_REGION_ONE_SIZE];
 char global_memory_region_two[DUMB_ALLOC_REGION_TWO_SIZE];
 
-struct dumb_alloc_context *global_context = (struct dumb_alloc_context *)NULL;
+dumb_alloc_t *global = (dumb_alloc_t *)NULL;
 
-void *_da_alloc(struct dumb_alloc_context *ctx, size_t request);
-void _da_free(struct dumb_alloc_context *ctx, void *ptr);
-void _dump_chunk(struct dumb_alloc_chunk *chunk, unsigned char deep);
-void _dump_block(struct dumb_alloc_block *block, unsigned char deep);
-void _dump_context(struct dumb_alloc_context *ctx, unsigned char deep);
+void *_da_alloc(dumb_alloc_t *da, size_t request);
+void _da_free(dumb_alloc_t *da, void *ptr);
+void _dump_chunk(struct dumb_alloc_chunk *chunk);
+void _dump_block(struct dumb_alloc_block *block);
+void _dump(dumb_alloc_t *da);
 
-void dumb_alloc_set_global_context(struct dumb_alloc_context *ctx)
+void dumb_alloc_set_global(dumb_alloc_t *da)
 {
-	global_context = ctx;
+	global = da;
 }
 
-struct dumb_alloc_context *dumb_alloc_get_global_context()
+dumb_alloc_t *dumb_alloc_get_global()
 {
-	return global_context;
-}
-
-void dumb_alloc_dump_context(struct dumb_alloc_context *ctx)
-{
-	_dump_context(ctx, 1);
+	return global;
 }
 
 void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
@@ -61,36 +56,36 @@ void _init_block(char *memory, size_t region_size, size_t initial_overhead)
 	_init_chunk(block->first_chunk, block_available_length);
 }
 
-void _init_global_context_one()
+void _init_global()
 {
-	global_context = (struct dumb_alloc_context *)global_memory_region_one;
-	global_context->da_alloc = _da_alloc;
-	global_context->da_free = _da_free;
-	global_context->data = (global_memory_region_one +
-					sizeof(struct dumb_alloc_context));
+	global = (dumb_alloc_t *)global_memory_region_one;
+	global->malloc = _da_alloc;
+	global->free = _da_free;
+	global->dump = _dump;
+	global->data = (global_memory_region_one + sizeof(dumb_alloc_t));
 	_init_block(global_memory_region_one,
 		    DUMB_ALLOC_REGION_ONE_SIZE,
-		    sizeof(struct dumb_alloc_context));
+		    sizeof(dumb_alloc_t));
 }
 
 void *dumb_malloc(size_t request_size)
 {
-	if (!global_context) {
-		_init_global_context_one();
+	if (!global) {
+		_init_global();
 	}
-	return global_context->da_alloc(global_context, request_size);
+	return global->malloc(global, request_size);
 }
 
 void dumb_free(void *ptr)
 {
-	if (!global_context) {
+	if (!global) {
 		/*
-		   printf("NO GLOBAL CONTEXT! global_context: %p\n",
-		   (void *)global_context);
+		   printf("NO GLOBAL CONTEXT! global: %p\n",
+		   (void *)global);
 		 */
 		return;
 	}
-	global_context->da_free(global_context, ptr);
+	global->free(global, ptr);
 }
 
 void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
@@ -111,17 +106,17 @@ void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 	from->next->prev = from;
 }
 
-void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
+void *_da_alloc(dumb_alloc_t *da, size_t request)
 {
 	struct dumb_alloc_block *first_block;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
 	size_t needed;
 
-	if (!ctx) {
+	if (!da) {
 		return NULL;
 	}
-	block = (struct dumb_alloc_block *)ctx->data;
+	block = (struct dumb_alloc_block *)da->data;
 	while (block != NULL) {
 		for (chunk = block->first_chunk; chunk != NULL;
 		     chunk = chunk->next) {
@@ -138,7 +133,7 @@ void *_da_alloc(struct dumb_alloc_context *ctx, size_t request)
 	needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
-	first_block = (struct dumb_alloc_block *)ctx->data;
+	first_block = (struct dumb_alloc_block *)da->data;
 	if (DUMB_ALLOC_REGION_TWO_SIZE >= needed
 	    && first_block->next_block == NULL) {
 		block = (struct dumb_alloc_block *)global_memory_region_two;
@@ -187,12 +182,12 @@ char _chunks_in_use(struct dumb_alloc_block *block)
 	return 0;
 }
 
-void _release_unused_block(struct dumb_alloc_context *ctx)
+void _release_unused_block(dumb_alloc_t *da)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_block *block_prev;
 
-	block = (struct dumb_alloc_block *)ctx->data;
+	block = (struct dumb_alloc_block *)da->data;
 	while (block != NULL) {
 		block_prev = block;
 		block = block->next_block;
@@ -202,16 +197,16 @@ void _release_unused_block(struct dumb_alloc_context *ctx)
 	}
 }
 
-void _da_free(struct dumb_alloc_context *ctx, void *ptr)
+void _da_free(dumb_alloc_t *da, void *ptr)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
 	size_t i;
 
-	if (!ctx || !ptr) {
+	if (!da || !ptr) {
 		return;
 	}
-	block = (struct dumb_alloc_block *)ctx->data;
+	block = (struct dumb_alloc_block *)da->data;
 	while (block != NULL) {
 		for (chunk = block->first_chunk; chunk != NULL;
 		     chunk = chunk->next) {
@@ -228,7 +223,7 @@ void _da_free(struct dumb_alloc_context *ctx, void *ptr)
 				for (i = 0; i < chunk->available_length; ++i) {
 					chunk->start[i] = 0;
 				}
-				_release_unused_block(ctx);
+				_release_unused_block(da);
 				return;
 			}
 		}
@@ -236,7 +231,7 @@ void _da_free(struct dumb_alloc_context *ctx, void *ptr)
 	}
 	/*
 	   printf("chunk for %p not found!\n", ptr);
-	   dumb_alloc_dump_context(dumb_alloc_get_global_context());
+	   dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 	 */
 	return;
 }
@@ -251,10 +246,10 @@ void dumb_reset()
 	for (i = 0; i < DUMB_ALLOC_REGION_TWO_SIZE; ++i) {
 		global_memory_region_two[i] = 0;
 	}
-	global_context = (struct dumb_alloc_context *)NULL;
+	global = (dumb_alloc_t *)NULL;
 }
 
-void _dump_chunk(struct dumb_alloc_chunk *chunk, unsigned char deep)
+void _dump_chunk(struct dumb_alloc_chunk *chunk)
 {
 	printf("chunk %p ( %llu )\n", (void *)chunk,
 	       (unsigned long long)((void *)chunk));
@@ -270,12 +265,12 @@ void _dump_chunk(struct dumb_alloc_chunk *chunk, unsigned char deep)
 	       (unsigned long long)((void *)chunk->prev));
 	printf("\tnext: %p ( %llu )\n", (void *)chunk->next,
 	       (unsigned long long)((void *)chunk->next));
-	if (deep && chunk->next) {
-		_dump_chunk(chunk->next, deep);
+	if (chunk->next) {
+		_dump_chunk(chunk->next);
 	}
 }
 
-void _dump_block(struct dumb_alloc_block *block, unsigned char deep)
+void _dump_block(struct dumb_alloc_block *block)
 {
 	printf("block %p ( %llu )\n", (void *)block,
 	       (unsigned long long)((void *)block));
@@ -288,33 +283,33 @@ void _dump_block(struct dumb_alloc_block *block, unsigned char deep)
 	       (unsigned long long)block->total_length);
 	printf("\tfirst_chunk: %p ( %llu )\n", (void *)block->first_chunk,
 	       (unsigned long long)((void *)block->first_chunk));
-	if (deep && block->first_chunk) {
-		_dump_chunk(block->first_chunk, deep);
+	if (block->first_chunk) {
+		_dump_chunk(block->first_chunk);
 	}
 	printf("\tnext_block: %p ( %llu )\n", (void *)block->next_block,
 	       (unsigned long long)((void *)block->next_block));
-	if (deep && block->next_block) {
-		_dump_block(block->next_block, deep);
+	if (block->next_block) {
+		_dump_block(block->next_block);
 	}
 }
 
-void _dump_context(struct dumb_alloc_context *ctx, unsigned char deep)
+void _dump(dumb_alloc_t *da)
 {
-	printf("sizeof(struct dumb_alloc_context): %lu\n",
-	       sizeof(struct dumb_alloc_context));
+	printf("sizeof(dumb_alloc_t): %lu\n",
+	       sizeof(dumb_alloc_t));
 	printf("sizeof(struct dumb_alloc_block): %lu\n",
 	       sizeof(struct dumb_alloc_block));
 	printf("sizeof(struct dumb_alloc_chunk): %lu\n",
 	       sizeof(struct dumb_alloc_chunk));
 
-	printf("context %p ( %llu )\n", (void *)ctx,
-	       (unsigned long long)((void *)ctx));
-	if (!ctx) {
+	printf("context %p ( %llu )\n", (void *)da,
+	       (unsigned long long)((void *)da));
+	if (!da) {
 		return;
 	}
-	printf("\tblock: %p ( %llu )\n", ctx->data,
-	       (unsigned long long)ctx->data);
-	if (deep && ctx->data) {
-		_dump_block((struct dumb_alloc_block *)ctx->data, deep);
+	printf("\tblock: %p ( %llu )\n", da->data,
+	       (unsigned long long)da->data);
+	if (da->data) {
+		_dump_block((struct dumb_alloc_block *)da->data);
 	}
 }

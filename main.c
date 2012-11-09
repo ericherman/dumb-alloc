@@ -11,7 +11,7 @@ void *d_malloc(size_t size)
 	if (!ptr) {
 		printf("\n");
 		printf("alloc returned NULL\n");
-		dumb_alloc_dump_context(dumb_alloc_get_global_context());
+		dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 		printf("FAIL\n");
 	}
 	return ptr;
@@ -26,7 +26,7 @@ char compare_strings(const char *actual, const char *expected)
 	printf("\n");
 	printf("expected (%p) '%s' but was '%s'\n", (void *)expected, expected,
 	       actual);
-	dumb_alloc_dump_context(dumb_alloc_get_global_context());
+	dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 	printf("FAIL\n");
 	return 1;
 }
@@ -108,7 +108,7 @@ char test_out_of_memmory(void)
 
 	if (mem4 != NULL) {
 		printf("\n\texpected NULL but was %p\n", mem4);
-		dumb_alloc_dump_context(dumb_alloc_get_global_context());
+		dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 		printf("FAIL\n");
 		return 1;
 	}
@@ -136,7 +136,7 @@ char test_free(void)
 	dumb_free(mem1);
 	if (mem1 == NULL) {
 		printf("\n\texpected not-null, but was %p\n", mem1);
-		dumb_alloc_dump_context(dumb_alloc_get_global_context());
+		dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 		printf("FAIL\n");
 		return 1;
 	}
@@ -147,7 +147,7 @@ char test_free(void)
 
 	if (mem3 == NULL) {
 		printf("\n\texpected not-null, but was %p\n", mem3);
-		dumb_alloc_dump_context(dumb_alloc_get_global_context());
+		dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 		printf("FAIL\n");
 		return 1;
 	}
