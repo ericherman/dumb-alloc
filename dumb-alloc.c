@@ -141,23 +141,23 @@ void *_da_alloc(dumb_alloc_t * da, size_t request)
 		}
 		block = block->next_block;
 	}
+
 	needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
 	first_block = (struct dumb_alloc_block *)da->data;
-	if (DUMB_ALLOC_REGION_TWO_SIZE >= needed
-	    && first_block->next_block == NULL) {
-		block = (struct dumb_alloc_block *)global_memory_region_two;
-		_init_block(global_memory_region_two,
-			    DUMB_ALLOC_REGION_TWO_SIZE, 0);
-		first_block->next_block = block;
-		chunk = block->first_chunk;
-		_split_chunk(chunk, request);
-		chunk->in_use = 1;
-		return chunk->start;
-	}
 
-	return NULL;
+	if (DUMB_ALLOC_REGION_TWO_SIZE < needed
+	    || first_block->next_block != NULL) {
+		return NULL;
+	}
+	block = (struct dumb_alloc_block *)global_memory_region_two;
+	_init_block(global_memory_region_two, DUMB_ALLOC_REGION_TWO_SIZE, 0);
+	first_block->next_block = block;
+	chunk = block->first_chunk;
+	_split_chunk(chunk, request);
+	chunk->in_use = 1;
+	return chunk->start;
 }
 
 void _chunk_join_next(struct dumb_alloc_chunk *chunk)
