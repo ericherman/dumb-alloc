@@ -8,15 +8,15 @@
 char global_memory_region_one[DUMB_ALLOC_REGION_ONE_SIZE];
 char global_memory_region_two[DUMB_ALLOC_REGION_TWO_SIZE];
 
-dumb_alloc_t *global = (dumb_alloc_t *)NULL;
+dumb_alloc_t *global = (dumb_alloc_t *) NULL;
 
-void *_da_alloc(dumb_alloc_t *da, size_t request);
-void _da_free(dumb_alloc_t *da, void *ptr);
+void *_da_alloc(dumb_alloc_t * da, size_t request);
+void _da_free(dumb_alloc_t * da, void *ptr);
 void _dump_chunk(struct dumb_alloc_chunk *chunk);
 void _dump_block(struct dumb_alloc_block *block);
-void _dump(dumb_alloc_t *da);
+void _dump(dumb_alloc_t * da);
 
-void dumb_alloc_set_global(dumb_alloc_t *da)
+void dumb_alloc_set_global(dumb_alloc_t * da)
 {
 	global = da;
 }
@@ -56,8 +56,8 @@ void _init_block(char *memory, size_t region_size, size_t initial_overhead)
 	_init_chunk(block->first_chunk, block_available_length);
 }
 
-
-void dumb_alloc_init(dumb_alloc_t *da, char *memory, size_t length, size_t overhead)
+void dumb_alloc_init(dumb_alloc_t * da, char *memory, size_t length,
+		     size_t overhead)
 {
 	da->malloc = _da_alloc;
 	da->free = _da_free;
@@ -75,7 +75,7 @@ void _init_global()
 	memory = global_memory_region_one;
 	length = DUMB_ALLOC_REGION_ONE_SIZE;
 	overhead = sizeof(dumb_alloc_t);
-	global = (dumb_alloc_t *)global_memory_region_one;
+	global = (dumb_alloc_t *) global_memory_region_one;
 	dumb_alloc_init(global, memory, length, overhead);
 }
 
@@ -117,7 +117,7 @@ void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 	from->next->prev = from;
 }
 
-void *_da_alloc(dumb_alloc_t *da, size_t request)
+void *_da_alloc(dumb_alloc_t * da, size_t request)
 {
 	struct dumb_alloc_block *first_block;
 	struct dumb_alloc_block *block;
@@ -193,7 +193,7 @@ char _chunks_in_use(struct dumb_alloc_block *block)
 	return 0;
 }
 
-void _release_unused_block(dumb_alloc_t *da)
+void _release_unused_block(dumb_alloc_t * da)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_block *block_prev;
@@ -208,7 +208,7 @@ void _release_unused_block(dumb_alloc_t *da)
 	}
 }
 
-void _da_free(dumb_alloc_t *da, void *ptr)
+void _da_free(dumb_alloc_t * da, void *ptr)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
@@ -257,7 +257,7 @@ void dumb_reset()
 	for (i = 0; i < DUMB_ALLOC_REGION_TWO_SIZE; ++i) {
 		global_memory_region_two[i] = 0;
 	}
-	global = (dumb_alloc_t *)NULL;
+	global = (dumb_alloc_t *) NULL;
 }
 
 void _dump_chunk(struct dumb_alloc_chunk *chunk)
@@ -304,10 +304,9 @@ void _dump_block(struct dumb_alloc_block *block)
 	}
 }
 
-void _dump(dumb_alloc_t *da)
+void _dump(dumb_alloc_t * da)
 {
-	printf("sizeof(dumb_alloc_t): %lu\n",
-	       sizeof(dumb_alloc_t));
+	printf("sizeof(dumb_alloc_t): %lu\n", sizeof(dumb_alloc_t));
 	printf("sizeof(struct dumb_alloc_block): %lu\n",
 	       sizeof(struct dumb_alloc_block));
 	printf("sizeof(struct dumb_alloc_chunk): %lu\n",
