@@ -56,16 +56,27 @@ void _init_block(char *memory, size_t region_size, size_t initial_overhead)
 	_init_chunk(block->first_chunk, block_available_length);
 }
 
+
+void dumb_alloc_init(dumb_alloc_t *da, char *memory, size_t length, size_t overhead)
+{
+	da->malloc = _da_alloc;
+	da->free = _da_free;
+	da->dump = _dump;
+	da->data = (memory + overhead);
+	_init_block(memory, length, overhead);
+}
+
 void _init_global()
 {
+	char *memory;
+	size_t length;
+	size_t overhead;
+
+	memory = global_memory_region_one;
+	length = DUMB_ALLOC_REGION_ONE_SIZE;
+	overhead = sizeof(dumb_alloc_t);
 	global = (dumb_alloc_t *)global_memory_region_one;
-	global->malloc = _da_alloc;
-	global->free = _da_free;
-	global->dump = _dump;
-	global->data = (global_memory_region_one + sizeof(dumb_alloc_t));
-	_init_block(global_memory_region_one,
-		    DUMB_ALLOC_REGION_ONE_SIZE,
-		    sizeof(dumb_alloc_t));
+	dumb_alloc_init(global, memory, length, overhead);
 }
 
 void *dumb_malloc(size_t request_size)

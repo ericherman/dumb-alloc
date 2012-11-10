@@ -13,6 +13,9 @@ typedef struct dumb_alloc_t_ {
 	void *data;
 } dumb_alloc_t;
 
+/* constructor */
+void dumb_alloc_init(dumb_alloc_t *da, char *memory, size_t length, size_t overhead);
+
 /* global malloc/free compat fuctions */
 void *dumb_malloc(size_t request_size);
 void dumb_free(void *ptr);
