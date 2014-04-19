@@ -1,6 +1,6 @@
 #
 CC=gcc
-CFLAGS=-c -Werror -Wall -Wextra -pedantic -Wno-long-long \
+CFLAGS=-Werror -Wall -Wextra -pedantic -Wno-long-long \
  -ggdb -O0 -finstrument-functions
 LDFLAGS=
 
@@ -14,10 +14,10 @@ EXECUTABLE=dumb-alloc
 all: $(EXEC_SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(EXEC_OBJECTS)
-	$(CC) $(LDFLAGS) $(EXEC_OBJECTS) -o $@
+	$(CC) $(EXEC_OBJECTS) -o $@ $(LDFLAGS)
 
 .c.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 check:
 	./$(EXECUTABLE)
