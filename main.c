@@ -36,7 +36,7 @@ char test_simple(void)
 	const char *expected;
 	char *actual;
 
-	/* dumb_reset(); */
+	dumb_reset();
 
 	printf("test_simple ...");
 	expected = "Hello, World!";
@@ -74,7 +74,7 @@ char test_two_alloc(void)
 
 	printf("test_two_alloc ...");
 
-	/* dumb_reset(); */
+	dumb_reset();
 
 	message1 = dumb_dup("Hello");
 	message2 = dumb_dup("World");
@@ -101,7 +101,7 @@ char test_out_of_memmory(void)
 		mem[i] = NULL;
 	}
 
-	/* dumb_reset(); */
+	dumb_reset();
 
 	for (i = 0; i < 1000; i++) {
 		mem[i] = (char *)dumb_malloc((1 + i) * BIG_ALLOC);
@@ -136,7 +136,7 @@ char test_free(void)
 
 	printf("test_free ...");
 
-	/* dumb_reset(); */
+	dumb_reset();
 
 	mem1 = (char *)dumb_malloc(BIG_ALLOC);
 	dumb_free(mem1);

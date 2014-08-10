@@ -311,6 +311,12 @@ void _da_free(dumb_alloc_t * da, void *ptr)
 
 void dumb_reset()
 {
+	struct dumb_alloc_block *block;
+
+	if (global) {
+		block = (struct dumb_alloc_block *)global->data;
+		munmap(global, block->total_length);
+	}
 	global = (dumb_alloc_t *) NULL;
 }
 
