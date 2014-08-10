@@ -259,7 +259,8 @@ void _release_unused_block(dumb_alloc_t * da)
 		block = block->next_block;
 		if (block && !_chunks_in_use(block)) {
 			block_prev->next_block = block->next_block;
-			/* munmap(block, block->total_length); */
+			munmap(block, block->total_length);
+			block = block_prev->next_block;
 		}
 	}
 }
