@@ -1,5 +1,7 @@
 #include "dumb-alloc-private.h"
+#include <sys/mman.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define DUMB_ALLOC_REGION_ONE_SIZE 4096
 #define DUMB_ALLOC_REGION_TWO_SIZE (DUMB_ALLOC_REGION_ONE_SIZE * 2)
@@ -15,8 +17,6 @@
 #endif
 
 /* TODO replace these with as-needed sysbrk calls */
-char global_memory_region_one[DUMB_ALLOC_REGION_ONE_SIZE];
-char global_memory_region_two[DUMB_ALLOC_REGION_TWO_SIZE];
 
 dumb_alloc_t *global = (dumb_alloc_t *) NULL;
 
@@ -76,16 +76,30 @@ void dumb_alloc_init(dumb_alloc_t * da, char *memory, size_t length,
 	_init_block(memory, length, overhead);
 }
 
+char *_mmap(size_t length) {
+	void *memory;
+
+	memory = mmap(NULL, length, PROT_READ | PROT_WRITE,
+		      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+	if (!memory) {
+		fprintf(stderr, "Could not allocate\n");
+		exit(1);
+	}
+
+	return (char *) memory;
+}
+
 void _init_global()
 {
 	char *memory;
 	size_t length;
 	size_t overhead;
 
-	memory = global_memory_region_one;
+	memory = _mmap(DUMB_ALLOC_REGION_ONE_SIZE);
 	length = DUMB_ALLOC_REGION_ONE_SIZE;
 	overhead = sizeof(dumb_alloc_t);
-	global = (dumb_alloc_t *) global_memory_region_one;
+	global = (dumb_alloc_t *) memory;
 	dumb_alloc_init(global, memory, length, overhead);
 }
 
@@ -129,6 +143,7 @@ void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 
 void *_da_alloc(dumb_alloc_t * da, size_t request)
 {
+	char *memory;
 	struct dumb_alloc_block *first_block;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
@@ -161,8 +176,9 @@ void *_da_alloc(dumb_alloc_t * da, size_t request)
 	    || first_block->next_block != NULL) {
 		return NULL;
 	}
-	block = (struct dumb_alloc_block *)global_memory_region_two;
-	_init_block(global_memory_region_two, DUMB_ALLOC_REGION_TWO_SIZE, 0);
+	memory = _mmap(DUMB_ALLOC_REGION_TWO_SIZE);
+	block = (struct dumb_alloc_block *) memory;
+	_init_block(memory, DUMB_ALLOC_REGION_TWO_SIZE, 0);
 	first_block->next_block = block;
 	chunk = block->first_chunk;
 	_split_chunk(chunk, request);
@@ -259,14 +275,6 @@ void _da_free(dumb_alloc_t * da, void *ptr)
 
 void dumb_reset()
 {
-	int i;
-	/* TODO: re-visit at REGION_ONE replace time */
-	for (i = 0; i < DUMB_ALLOC_REGION_ONE_SIZE; ++i) {
-		global_memory_region_one[i] = 0;
-	}
-	for (i = 0; i < DUMB_ALLOC_REGION_TWO_SIZE; ++i) {
-		global_memory_region_two[i] = 0;
-	}
 	global = (dumb_alloc_t *) NULL;
 }
 
