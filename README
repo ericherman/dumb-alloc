@@ -2,12 +2,15 @@
 
 This is a project for exploring ideas about memory allocation for C.
 
-I would like to be able to:
+Originally I wanted to be able to:
 * allocate memory dynamically from the OS
 * return unused memory to the OS
 * support special-purpose allocators e.g. allocator-per-tab
 
-It will be fun to bring this to a point that it could be used as an
+It does these things now, but of course, I could improve it ...
+ and perhaps I shall.
+
+It was fun to bring this to a point that it could be used as an
 alternative to malloc/free, however there is no goal of competing
 with existing implementations. Please do not confuse this with
 something intended to be useful for anything other than experimentation,

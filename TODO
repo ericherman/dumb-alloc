@@ -1,1 +1,2 @@
-1) replace static memory regions with dynamica allocation from the kernel
+1) replace #defines of MEMORY_LIMIT and PAGE_SIZE
+2) deal with un-allocating the initial block, for short-lived allocators
