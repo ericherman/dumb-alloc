@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DUMB_ALLOC_REGION_ONE_SIZE 4096
-#define DUMB_ALLOC_REGION_TWO_SIZE (DUMB_ALLOC_REGION_ONE_SIZE * 2)
+#define DUMB_ALLOC_PAGE_SIZE 4096
+#define DUMB_ALLOC_MEM_LIMIT 1073741824
 
 #ifdef __LP64__			/* if 64 bit environment */
 #define FMT_SIZEOF "lu"
@@ -79,12 +79,16 @@ void dumb_alloc_init(dumb_alloc_t * da, char *memory, size_t length,
 char *_mmap(size_t length) {
 	void *memory;
 
+	/*
+	fprintf(stderr, "requesting %" FMT_SIZE_T " bytes.\n", length);
+	*/
+
 	memory = mmap(NULL, length, PROT_READ | PROT_WRITE,
 		      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
 	if (!memory) {
-		fprintf(stderr, "Could not allocate\n");
-		exit(1);
+		fprintf(stderr, "Could not allocate %" FMT_SIZE_T " bytes\n",
+			length);
 	}
 
 	return (char *) memory;
@@ -96,8 +100,8 @@ void _init_global()
 	size_t length;
 	size_t overhead;
 
-	memory = _mmap(DUMB_ALLOC_REGION_ONE_SIZE);
-	length = DUMB_ALLOC_REGION_ONE_SIZE;
+	memory = _mmap(DUMB_ALLOC_PAGE_SIZE);
+	length = DUMB_ALLOC_PAGE_SIZE;
 	overhead = sizeof(dumb_alloc_t);
 	global = (dumb_alloc_t *) memory;
 	dumb_alloc_init(global, memory, length, overhead);
@@ -144,10 +148,13 @@ void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 void *_da_alloc(dumb_alloc_t * da, size_t request)
 {
 	char *memory;
-	struct dumb_alloc_block *first_block;
+	struct dumb_alloc_block *last_block;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
+	size_t min_needed;
 	size_t needed;
+	size_t requested;
+	size_t total_mem;
 
 	if (!da) {
 		return NULL;
@@ -167,19 +174,41 @@ void *_da_alloc(dumb_alloc_t * da, size_t request)
 		block = block->next_block;
 	}
 
-	needed =
+	last_block = (struct dumb_alloc_block *)da->data;
+	total_mem = last_block->total_length;
+	while (last_block->next_block != NULL) {
+		last_block = last_block->next_block;
+		total_mem += last_block->total_length;
+	}
+
+	min_needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
-	first_block = (struct dumb_alloc_block *)da->data;
-
-	if (DUMB_ALLOC_REGION_TWO_SIZE < needed
-	    || first_block->next_block != NULL) {
+	if (min_needed + total_mem > DUMB_ALLOC_MEM_LIMIT) {
 		return NULL;
 	}
-	memory = _mmap(DUMB_ALLOC_REGION_TWO_SIZE);
+	needed = min_needed + (2 * last_block->total_length);
+
+	requested = DUMB_ALLOC_PAGE_SIZE * (1 + (needed/DUMB_ALLOC_PAGE_SIZE));
+	if (requested + total_mem > DUMB_ALLOC_MEM_LIMIT) {
+		memory = NULL;
+	} else {
+		memory = _mmap(requested);
+	}
+	if (!memory) {
+		requested = min_needed;
+		requested = DUMB_ALLOC_PAGE_SIZE * (1 + (min_needed/DUMB_ALLOC_PAGE_SIZE));
+		if (requested + total_mem > DUMB_ALLOC_MEM_LIMIT) {
+			return NULL;
+		}
+		memory = _mmap(requested);
+		if (!memory) {
+			return NULL;
+		}
+	}
 	block = (struct dumb_alloc_block *) memory;
-	_init_block(memory, DUMB_ALLOC_REGION_TWO_SIZE, 0);
-	first_block->next_block = block;
+	_init_block(memory, requested, 0);
+	last_block->next_block = block;
 	chunk = block->first_chunk;
 	_split_chunk(chunk, request);
 	chunk->in_use = 1;
@@ -230,6 +259,7 @@ void _release_unused_block(dumb_alloc_t * da)
 		block = block->next_block;
 		if (block && !_chunks_in_use(block)) {
 			block_prev->next_block = block->next_block;
+			/* munmap(block, block->total_length); */
 		}
 	}
 }

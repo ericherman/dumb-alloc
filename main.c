@@ -92,32 +92,38 @@ char test_two_alloc(void)
 
 char test_out_of_memmory(void)
 {
-	char *mem1;
-	char *mem2;
-	char *mem3;
-	char *mem4;
+	char *mem[1000];
+	size_t i;
 
 	printf("test_out_of_memmory ...");
 
+	for(i = 0; i < 1000; i++) {
+		mem[i] = NULL;
+	}
+
 	/* dumb_reset(); */
 
-	mem1 = (char *)dumb_malloc(BIG_ALLOC);
-	mem2 = (char *)dumb_malloc(BIG_ALLOC);
-	mem3 = (char *)dumb_malloc(BIG_ALLOC);
-	mem4 = (char *)dumb_malloc(BIG_ALLOC);
+	for(i = 0; i < 1000; i++) {
+		mem[i] = (char*)dumb_malloc((1+i) * BIG_ALLOC);
+		if(mem[i] == NULL) {
+			break;
+		}
+	}
 
-	if (mem4 != NULL) {
-		printf("\n\texpected NULL but was %p\n", mem4);
+	if (i == 1000) {
+		printf("\n\texpected less than 1000 allocs\n");
 		dumb_alloc_get_global()->dump(dumb_alloc_get_global());
 		printf("FAIL\n");
 		return 1;
 	}
 
 	printf(" ok");
-	dumb_free(mem1);
-	dumb_free(mem2);
-	dumb_free(mem3);
-	dumb_free(mem4);
+	for(i = 0; i < 1000; i++) {
+		if (mem[i] != NULL) {
+			dumb_free(mem[i]);
+			mem[i] = NULL;
+		}
+	}
 	printf(".\n");
 	return 0;
 }
