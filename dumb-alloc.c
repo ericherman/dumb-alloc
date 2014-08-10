@@ -88,7 +88,7 @@ char *_mmap(size_t length) {
 
 	if (!memory) {
 		fprintf(stderr, "Could not allocate %" FMT_SIZE_T " bytes\n",
-			length);
+			(CAST_SIZE_T) length);
 	}
 
 	return (char *) memory;
