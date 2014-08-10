@@ -97,15 +97,15 @@ char test_out_of_memmory(void)
 
 	printf("test_out_of_memmory ...");
 
-	for(i = 0; i < 1000; i++) {
+	for (i = 0; i < 1000; i++) {
 		mem[i] = NULL;
 	}
 
 	/* dumb_reset(); */
 
-	for(i = 0; i < 1000; i++) {
-		mem[i] = (char*)dumb_malloc((1+i) * BIG_ALLOC);
-		if(mem[i] == NULL) {
+	for (i = 0; i < 1000; i++) {
+		mem[i] = (char *)dumb_malloc((1 + i) * BIG_ALLOC);
+		if (mem[i] == NULL) {
 			break;
 		}
 	}
@@ -118,7 +118,7 @@ char test_out_of_memmory(void)
 	}
 
 	printf(" ok");
-	for(i = 0; i < 1000; i++) {
+	for (i = 0; i < 1000; i++) {
 		if (mem[i] != NULL) {
 			dumb_free(mem[i]);
 			mem[i] = NULL;

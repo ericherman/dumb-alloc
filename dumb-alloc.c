@@ -76,12 +76,13 @@ void dumb_alloc_init(dumb_alloc_t * da, char *memory, size_t length,
 	_init_block(memory, length, overhead);
 }
 
-char *_mmap(size_t length) {
+char *_mmap(size_t length)
+{
 	void *memory;
 
 	/*
-	fprintf(stderr, "requesting %" FMT_SIZE_T " bytes.\n", length);
-	*/
+	   fprintf(stderr, "requesting %" FMT_SIZE_T " bytes.\n", length);
+	 */
 
 	memory = mmap(NULL, length, PROT_READ | PROT_WRITE,
 		      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -91,7 +92,7 @@ char *_mmap(size_t length) {
 			(CAST_SIZE_T) length);
 	}
 
-	return (char *) memory;
+	return (char *)memory;
 }
 
 void _init_global()
@@ -189,7 +190,8 @@ void *_da_alloc(dumb_alloc_t * da, size_t request)
 	}
 	needed = min_needed + (2 * last_block->total_length);
 
-	requested = DUMB_ALLOC_PAGE_SIZE * (1 + (needed/DUMB_ALLOC_PAGE_SIZE));
+	requested =
+	    DUMB_ALLOC_PAGE_SIZE * (1 + (needed / DUMB_ALLOC_PAGE_SIZE));
 	if (requested + total_mem > DUMB_ALLOC_MEM_LIMIT) {
 		memory = NULL;
 	} else {
@@ -197,7 +199,10 @@ void *_da_alloc(dumb_alloc_t * da, size_t request)
 	}
 	if (!memory) {
 		requested = min_needed;
-		requested = DUMB_ALLOC_PAGE_SIZE * (1 + (min_needed/DUMB_ALLOC_PAGE_SIZE));
+		requested =
+		    DUMB_ALLOC_PAGE_SIZE * (1 +
+					    (min_needed /
+					     DUMB_ALLOC_PAGE_SIZE));
 		if (requested + total_mem > DUMB_ALLOC_MEM_LIMIT) {
 			return NULL;
 		}
@@ -206,7 +211,7 @@ void *_da_alloc(dumb_alloc_t * da, size_t request)
 			return NULL;
 		}
 	}
-	block = (struct dumb_alloc_block *) memory;
+	block = (struct dumb_alloc_block *)memory;
 	_init_block(memory, requested, 0);
 	last_block->next_block = block;
 	chunk = block->first_chunk;
