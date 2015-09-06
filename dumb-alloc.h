@@ -1,5 +1,5 @@
-#ifndef _DUMB_ALLOC_H_
-#define _DUMB_ALLOC_H_
+#ifndef DUMB_ALLOC_H
+#define DUMB_ALLOC_H
 
 #include <stddef.h>
 
@@ -27,4 +27,4 @@ void dumb_reset();
 void dumb_alloc_set_global(struct dumb_alloc *da);
 struct dumb_alloc *dumb_alloc_get_global();
 
-#endif /* _DUMB_ALLOC_H_ */
+#endif /* DUMB_ALLOC_H */

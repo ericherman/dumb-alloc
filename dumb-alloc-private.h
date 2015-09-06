@@ -1,5 +1,5 @@
-#ifndef _DUMB_ALLOC_PRIVATE_H_
-#define _DUMB_ALLOC_PRIVATE_H_
+#ifndef DUMB_ALLOC_PRIVATE_H
+#define DUMB_ALLOC_PRIVATE_H
 
 #include "dumb-alloc.h"
 
@@ -18,4 +18,4 @@ struct dumb_alloc_block {
 	struct dumb_alloc_block *next_block;
 };
 
-#endif /* _DUMB_ALLOC_PRIVATE_H_ */
+#endif /* DUMB_ALLOC_PRIVATE_H */
