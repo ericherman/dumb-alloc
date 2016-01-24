@@ -1,38 +1,14 @@
 #include "dumb-alloc-private.h"
-#include <sys/mman.h>
+#include "dumb-os-alloc.h"
+#include "dumb-printf-defines.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#define DUMB_ALLOC_PAGE_SIZE 4096
-#define DUMB_ALLOC_MEM_LIMIT 1073741824
-
-#ifdef __LP64__			/* if 64 bit environment */
-#define FMT_SIZEOF "lu"
-#define FMT_SIZE_T "llu"
-#define CAST_SIZE_T unsigned long long
-#else
-#define FMT_SIZEOF "du"
-#define FMT_SIZE_T "du"
-#define CAST_SIZE_T unsigned int
-#endif
-
-struct dumb_alloc *global = (struct dumb_alloc *)NULL;
 
 void *_da_alloc(struct dumb_alloc *da, size_t request);
 void _da_free(struct dumb_alloc *da, void *ptr);
 void _dump_chunk(struct dumb_alloc_chunk *chunk);
 void _dump_block(struct dumb_alloc_block *block);
 void _dump(struct dumb_alloc *da);
-
-void dumb_alloc_set_global(struct dumb_alloc *da)
-{
-	global = da;
-}
-
-struct dumb_alloc *dumb_alloc_get_global()
-{
-	return global;
-}
 
 void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
 {
@@ -72,58 +48,6 @@ void dumb_alloc_init(struct dumb_alloc *da, char *memory, size_t length,
 	da->dump = _dump;
 	da->data = (memory + overhead);
 	_init_block(memory, length, overhead);
-}
-
-char *_mmap(size_t length)
-{
-	void *memory;
-
-	/*
-	   fprintf(stderr, "requesting %" FMT_SIZE_T " bytes.\n", length);
-	 */
-
-	memory = mmap(NULL, length, PROT_READ | PROT_WRITE,
-		      MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-	if (!memory) {
-		fprintf(stderr, "Could not allocate %" FMT_SIZE_T " bytes\n",
-			(CAST_SIZE_T) length);
-	}
-
-	return (char *)memory;
-}
-
-void _init_global()
-{
-	char *memory;
-	size_t length;
-	size_t overhead;
-
-	memory = _mmap(DUMB_ALLOC_PAGE_SIZE);
-	length = DUMB_ALLOC_PAGE_SIZE;
-	overhead = sizeof(struct dumb_alloc);
-	global = (struct dumb_alloc *)memory;
-	dumb_alloc_init(global, memory, length, overhead);
-}
-
-void *dumb_malloc(size_t request_size)
-{
-	if (!global) {
-		_init_global();
-	}
-	return global->malloc(global, request_size);
-}
-
-void dumb_free(void *ptr)
-{
-	if (!global) {
-		/*
-		   printf("NO GLOBAL CONTEXT! global: %p\n",
-		   (void *)global);
-		 */
-		return;
-	}
-	global->free(global, ptr);
 }
 
 void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
@@ -183,28 +107,26 @@ void *_da_alloc(struct dumb_alloc *da, size_t request)
 	min_needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
-	if (min_needed + total_mem > DUMB_ALLOC_MEM_LIMIT) {
+	if (min_needed + total_mem > dumb_os_mem_limit()) {
 		return NULL;
 	}
 	needed = min_needed + (2 * last_block->total_length);
 
-	requested =
-	    DUMB_ALLOC_PAGE_SIZE * (1 + (needed / DUMB_ALLOC_PAGE_SIZE));
-	if (requested + total_mem > DUMB_ALLOC_MEM_LIMIT) {
+	requested = dumb_os_page_size() * (1 + (needed / dumb_os_page_size()));
+	if (requested + total_mem > dumb_os_mem_limit()) {
 		memory = NULL;
 	} else {
-		memory = _mmap(requested);
+		memory = dumb_os_mmap(requested);
 	}
 	if (!memory) {
 		requested = min_needed;
 		requested =
-		    DUMB_ALLOC_PAGE_SIZE * (1 +
-					    (min_needed /
-					     DUMB_ALLOC_PAGE_SIZE));
-		if (requested + total_mem > DUMB_ALLOC_MEM_LIMIT) {
+		    dumb_os_page_size() * (1 +
+					   (min_needed / dumb_os_page_size()));
+		if (requested + total_mem > dumb_os_mem_limit()) {
 			return NULL;
 		}
-		memory = _mmap(requested);
+		memory = dumb_os_mmap(requested);
 		if (!memory) {
 			return NULL;
 		}
@@ -262,7 +184,7 @@ void _release_unused_block(struct dumb_alloc *da)
 		block = block->next_block;
 		if (block && !_chunks_in_use(block)) {
 			block_prev->next_block = block->next_block;
-			munmap(block, block->total_length);
+			dumb_os_munmap(block, block->total_length);
 			block = block_prev->next_block;
 		}
 	}
@@ -302,20 +224,9 @@ void _da_free(struct dumb_alloc *da, void *ptr)
 	}
 	/*
 	   printf("chunk for %p not found!\n", ptr);
-	   dumb_alloc_get_global()->dump(dumb_alloc_get_global());
+	   da->dump(da);
 	 */
 	return;
-}
-
-void dumb_reset()
-{
-	struct dumb_alloc_block *block;
-
-	if (global) {
-		block = (struct dumb_alloc_block *)global->data;
-		munmap(global, block->total_length);
-	}
-	global = (struct dumb_alloc *)NULL;
 }
 
 void _dump_chunk(struct dumb_alloc_chunk *chunk)

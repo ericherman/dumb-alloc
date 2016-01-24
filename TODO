@@ -1,3 +1,20 @@
 1) replace #defines of MEMORY_LIMIT and PAGE_SIZE
 2) deal with un-allocating the additional blocks for short-lived allocators
 3) add a destroy/free_all
+4) consider creating pools in global:
+    pool[ 0]          0 -       2048
+    pool[ 1]       2049 -       4096
+    pool[ 2]       4097 -       8192
+    pool[ 3]       8193 -      16384
+    pool[ 4]      16385 -      32768
+    pool[ 5]      32769 -      65536
+    pool[ 6]      65537 -     131072
+    pool[ 7]     131073 -     262144
+    pool[ 8]     262145 -     524288
+    pool[ 9]     524289 -    1048576
+    pool[10]    1048577 -    2097152
+    pool[11]    2097153 -    4194304
+    pool[12]    4194305 -    8388608
+    pool[13]    8388609 -   16777216
+    pool[14]   16777217 -   33554432
+    pool[15]   33554433 -        max

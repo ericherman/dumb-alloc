@@ -1,4 +1,5 @@
 dumb-alloc
+dumb-alloc-test
 *.a
 *.d
 *.o

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "dumb-alloc.h"
+#include "dumb-alloc-global.h"
 #define BIG_ALLOC 4000
 
 void *d_malloc(size_t size)
