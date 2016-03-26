@@ -11,6 +11,9 @@ EXEC_OBJECTS=$(EXEC_SOURCES:.c=.o)
 
 EXECUTABLE=dumb-alloc-test
 
+# extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
+LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
+
 all: $(EXEC_SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(EXEC_OBJECTS)
@@ -21,6 +24,12 @@ $(EXECUTABLE): $(EXEC_OBJECTS)
 
 check: $(EXEC_SOURCES) $(EXECUTABLE)
 	./$(EXECUTABLE)
+
+tidy:
+	$(LINDENT) \
+		-T FILE \
+		-T size_t \
+		*.h *.c
 
 clean:
 	rm -rf *o $(EXECUTABLE)
