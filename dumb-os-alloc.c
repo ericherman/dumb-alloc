@@ -2,6 +2,7 @@
 #include "dumb-printf-defines.h"
 #include <sys/mman.h>
 #include <stdio.h>
+#include <unistd.h>
 
 char *dumb_os_mmap(size_t length)
 {
@@ -29,7 +30,7 @@ int dumb_os_munmap(void *addr, size_t bytes_length)
 
 size_t dumb_os_page_size()
 {
-	return 4096;
+	return (size_t) sysconf(_SC_PAGESIZE);
 }
 
 size_t dumb_os_mem_limit()

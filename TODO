@@ -1,4 +1,4 @@
-1) replace #defines of MEMORY_LIMIT and PAGE_SIZE
+1) replace hardcoded memory limit
 2) deal with un-allocating the additional blocks for short-lived allocators
 3) add a destroy/free_all
 4) consider creating pools in global:
