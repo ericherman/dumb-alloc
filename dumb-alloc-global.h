@@ -13,4 +13,4 @@ void dumb_reset();
 void dumb_alloc_set_global(struct dumb_alloc *da);
 struct dumb_alloc *dumb_alloc_get_global();
 
-#endif /* DUMB_OS_ALLOC_H */
+#endif /* DUMB_ALLOC_GLOBAL_H */
