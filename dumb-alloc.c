@@ -5,12 +5,12 @@
 #include <stdlib.h>
 
 void *_da_alloc(struct dumb_alloc *da, size_t request);
-void _da_free(struct dumb_alloc *da, void *ptr);
-void _dump_chunk(struct dumb_alloc_chunk *chunk);
-void _dump_block(struct dumb_alloc_block *block);
-void _dump(struct dumb_alloc *da);
+static void _da_free(struct dumb_alloc *da, void *ptr);
+static void _dump_chunk(struct dumb_alloc_chunk *chunk);
+static void _dump_block(struct dumb_alloc_block *block);
+static void _dump(struct dumb_alloc *da);
 
-void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
+static void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
 {
 	chunk->start = ((char *)chunk) + sizeof(struct dumb_alloc_chunk);
 	chunk->available_length =
@@ -20,7 +20,8 @@ void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
 	chunk->next = (struct dumb_alloc_chunk *)NULL;
 }
 
-void _init_block(char *memory, size_t region_size, size_t initial_overhead)
+static void _init_block(char *memory, size_t region_size,
+			size_t initial_overhead)
 {
 	struct dumb_alloc_block *block;
 	size_t block_available_length;
@@ -50,7 +51,7 @@ void dumb_alloc_init(struct dumb_alloc *da, char *memory, size_t length,
 	_init_block(memory, length, overhead);
 }
 
-void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
+static void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 {
 	size_t remaining_available_length;
 	if ((request + sizeof(struct dumb_alloc_chunk)) >
@@ -140,7 +141,7 @@ void *_da_alloc(struct dumb_alloc *da, size_t request)
 	return chunk->start;
 }
 
-void _chunk_join_next(struct dumb_alloc_chunk *chunk)
+static void _chunk_join_next(struct dumb_alloc_chunk *chunk)
 {
 	struct dumb_alloc_chunk *next;
 	size_t additional_available_length;
@@ -173,7 +174,7 @@ char _chunks_in_use(struct dumb_alloc_block *block)
 	return 0;
 }
 
-void _release_unused_block(struct dumb_alloc *da)
+static void _release_unused_block(struct dumb_alloc *da)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_block *block_prev;
@@ -190,7 +191,7 @@ void _release_unused_block(struct dumb_alloc *da)
 	}
 }
 
-void _da_free(struct dumb_alloc *da, void *ptr)
+static void _da_free(struct dumb_alloc *da, void *ptr)
 {
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
@@ -229,7 +230,7 @@ void _da_free(struct dumb_alloc *da, void *ptr)
 	return;
 }
 
-void _dump_chunk(struct dumb_alloc_chunk *chunk)
+static void _dump_chunk(struct dumb_alloc_chunk *chunk)
 {
 	printf("chunk %p ( %" FMT_SIZE_T " )\n", (void *)chunk,
 	       (CAST_SIZE_T) ((void *)chunk));
@@ -250,7 +251,7 @@ void _dump_chunk(struct dumb_alloc_chunk *chunk)
 	}
 }
 
-void _dump_block(struct dumb_alloc_block *block)
+static void _dump_block(struct dumb_alloc_block *block)
 {
 	printf("block %p ( %" FMT_SIZE_T " )\n", (void *)block,
 	       (CAST_SIZE_T) ((void *)block));
@@ -276,7 +277,7 @@ void _dump_block(struct dumb_alloc_block *block)
 	}
 }
 
-void _dump(struct dumb_alloc *da)
+static void _dump(struct dumb_alloc *da)
 {
 	printf("sizeof(struct dumb_alloc): %" FMT_SIZEOF "\n",
 	       sizeof(struct dumb_alloc));
