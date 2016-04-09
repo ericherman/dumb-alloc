@@ -30,7 +30,7 @@ int dumb_os_munmap(void *addr, size_t bytes_length)
 
 size_t dumb_os_page_size()
 {
-	return (size_t) sysconf(_SC_PAGESIZE);
+	return (size_t)sysconf(_SC_PAGESIZE);
 }
 
 size_t dumb_os_mem_limit()

@@ -29,6 +29,7 @@ tidy:
 	$(LINDENT) \
 		-T FILE \
 		-T size_t \
+		-T dumb_alloc \
 		*.h *.c
 
 clean:
