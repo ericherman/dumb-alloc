@@ -3,6 +3,7 @@
 #include "dumb-printf-defines.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 void *_da_alloc(struct dumb_alloc *da, size_t request);
 static void _da_free(struct dumb_alloc *da, void *ptr);
@@ -109,6 +110,7 @@ void *_da_alloc(struct dumb_alloc *da, size_t request)
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
 	if (min_needed + total_mem > dumb_os_mem_limit()) {
+		errno = ENOMEM;
 		return NULL;
 	}
 	needed = min_needed + (2 * last_block->total_length);
@@ -125,10 +127,12 @@ void *_da_alloc(struct dumb_alloc *da, size_t request)
 		    dumb_os_page_size() * (1 +
 					   (min_needed / dumb_os_page_size()));
 		if (requested + total_mem > dumb_os_mem_limit()) {
+			errno = ENOMEM;
 			return NULL;
 		}
 		memory = dumb_os_mmap(requested);
 		if (!memory) {
+			errno = ENOMEM;
 			return NULL;
 		}
 	}

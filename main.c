@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "dumb-alloc-global.h"
 #define BIG_ALLOC 4000
 
@@ -94,6 +95,7 @@ char test_out_of_memmory(void)
 {
 	char *mem[1000];
 	size_t i;
+	int errsave;
 
 	printf("test_out_of_memmory ...");
 
@@ -103,9 +105,25 @@ char test_out_of_memmory(void)
 
 	dumb_reset();
 
+	errsave = errno;
+	if (errsave) {
+		printf("unexpected errno: %d: %s; resetting\n",
+		       errsave, strerror(errsave));
+		errno = 0;
+	}
+
 	for (i = 0; i < 1000; i++) {
 		mem[i] = (char *)dumb_malloc((1 + i) * BIG_ALLOC);
 		if (mem[i] == NULL) {
+			errsave = errno;
+			if (errsave != ENOMEM) {
+				printf("unexpected errno: %d: %s\n",
+				       errsave, strerror(errsave));
+				printf("FAIL\n");
+				return 1;
+			} else {
+				errno = 0;
+			}
 			break;
 		}
 	}
