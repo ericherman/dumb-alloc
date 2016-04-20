@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-void *_da_alloc(struct dumb_alloc *da, size_t request);
+static void *_da_alloc(struct dumb_alloc *da, size_t request);
 static void _da_free(struct dumb_alloc *da, void *ptr);
 static void _dump_chunk(struct dumb_alloc_chunk *chunk);
 static void _dump_block(struct dumb_alloc_block *block);
@@ -70,7 +70,7 @@ static void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 	from->next->prev = from;
 }
 
-void *_da_alloc(struct dumb_alloc *da, size_t request)
+static void *_da_alloc(struct dumb_alloc *da, size_t request)
 {
 	char *memory;
 	struct dumb_alloc_block *last_block;
