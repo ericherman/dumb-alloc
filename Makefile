@@ -4,8 +4,8 @@ CFLAGS=-Werror -Wall -Wextra -pedantic -Wno-long-long \
  -ggdb -O0 -finstrument-functions
 LDFLAGS=
 
-SOURCES=dumb-os-alloc.c dumb-alloc.c dumb-alloc-global.c
-EXEC_SOURCES=$(SOURCES) main.c
+SOURCES=src/dumb-os-alloc.c src/dumb-alloc.c src/dumb-alloc-global.c
+EXEC_SOURCES=$(SOURCES) tests/main.c
 
 EXEC_OBJECTS=$(EXEC_SOURCES:.c=.o)
 
@@ -30,7 +30,7 @@ tidy:
 		-T FILE \
 		-T size_t \
 		-T dumb_alloc \
-		*.h *.c
+		`find . -type f -name '*.h' -o -name '*.c'`
 
 clean:
 	rm -rf *o $(EXECUTABLE)
