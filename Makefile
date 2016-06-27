@@ -33,4 +33,4 @@ tidy:
 		`find . -type f -name '*.h' -o -name '*.c'`
 
 clean:
-	rm -rf *o $(EXECUTABLE)
+	rm -rf src/*.o tests/*.o $(EXECUTABLE)
