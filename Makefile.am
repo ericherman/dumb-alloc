@@ -1,9 +1,11 @@
 lib_LTLIBRARIES=libdumb-alloc.la
 
+ACLOCAL_AMFLAGS=-I m4 --install
+
 libdumb_alloc_la_SOURCES=\
  src/dumb-os-alloc.c \
  src/dumb-alloc-global.c \
- src/dumb-alloc.c \
+ src/dumb-alloc.c
 
 include_HEADERS=\
  src/dumb-alloc-private.h \
@@ -14,8 +16,7 @@ include_HEADERS=\
 
 TESTS=$(check_PROGRAMS)
 check_PROGRAMS=test-dumb-alloc
-test_dumb_alloc_SOURCES=$(include_HEADERS) $(libdumb_alloc_la_SOURCES) \
- tests/main.c
+test_dumb_alloc_SOURCES=$(include_HEADERS) tests/main.c
 test_dumb_alloc_LDADD=libdumb-alloc.la
 
 AM_CFLAGS=-std=c89 -O0 -ggdb -Wall -Wextra -Wpedantic -Werror
