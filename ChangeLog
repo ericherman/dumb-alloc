@@ -1,0 +1,3 @@
+2016-07-04  Eric Herman <eric@freesa.org>
+
+	* src/dumb-os-alloc.c: define MAP_ANONYMOUS to 0x20 if not defined

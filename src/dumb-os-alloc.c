@@ -4,6 +4,15 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#ifndef MAP_ANONYMOUS
+#ifdef MAP_ANON
+#define MAP_ANONYMOUS MAP_ANON
+#else
+/* from: /usr/include/asm-generic/mman-common.h */
+#define MAP_ANONYMOUS 0x20	/* don't use a file */
+#endif
+#endif
+
 char *dumb_os_mmap(size_t length)
 {
 	void *memory;
