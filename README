@@ -18,3 +18,20 @@ self-education, and fun.
 
 See also: https://github.com/hoelzro/smart-alloc
 Smart Alloc - A memory allocator for C
+
+
+Building
+---------
+autoreconf -iv &&
+ ./configure &&
+ make &&
+ make check &&
+ echo "Success."
+sudo make install
+sudo ldconfig
+
+
+License
+-------
+GNU Lesser General Public License (LGPL), version 2.1 or later.
+See COPYING for details.
