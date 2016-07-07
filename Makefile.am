@@ -30,3 +30,11 @@ tidy:
 		-T size_t \
 		-T dumb_alloc \
 		`find . -type f -name '*.h' -o -name '*.c'`
+
+spotless:
+	rm -rf `cat .gitignore | sed -e 's/#.*//'`
+	pushd src && rm -rf `cat ../.gitignore | sed -e 's/#.*//'` && popd
+	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'` && popd
+
+valgrind: $(check_PROGRAMS)
+	libtool --mode=execute valgrind -q ./test-dumb-alloc
