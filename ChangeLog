@@ -1,3 +1,18 @@
+2016-07-08  Eric Herman <eric@freesa.org>
+
+	extracted five separate tests from original "main.c"
+
+	* tests/test-dumb-alloc.h: extracted from main.c
+	* tests/test_checkered_alloc.c: also
+	* tests/test_free.c: also 
+	* tests/test_out_of_memmory.c: also
+	* tests/test_simple.c: also
+	* tests/test_two_alloc.c: also
+	* tests/main.c: removed
+	* Makefile.am: modify check_PROGRAMS to reflect 5 separate tests
+	* .gitignore: ignore new tests
+
+
 2016-07-04  Eric Herman <eric@freesa.org>
 
 	* src/dumb-os-alloc.c: define MAP_ANONYMOUS to 0x20 if not defined

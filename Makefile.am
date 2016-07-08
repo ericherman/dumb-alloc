@@ -15,9 +15,30 @@ include_HEADERS=\
  src/dumb-alloc-global.h 
 
 TESTS=$(check_PROGRAMS)
-check_PROGRAMS=test-dumb-alloc
-test_dumb_alloc_SOURCES=$(include_HEADERS) tests/main.c
-test_dumb_alloc_LDADD=libdumb-alloc.la
+check_PROGRAMS=\
+ test_simple \
+ test_two_alloc \
+ test_free \
+ test_out_of_memmory \
+ test_checkered_alloc
+
+common_test_sources=$(include_HEADERS) tests/test-dumb-alloc.h
+
+test_simple_SOURCES=$(common_test_sources) tests/test_simple.c
+test_simple_LDADD=libdumb-alloc.la
+
+test_two_alloc_SOURCES=$(common_test_sources) tests/test_two_alloc.c
+test_two_alloc_LDADD=libdumb-alloc.la
+
+test_free_SOURCES=$(common_test_sources) tests/test_free.c
+test_free_LDADD=libdumb-alloc.la
+
+test_out_of_memmory_SOURCES=$(common_test_sources) tests/test_out_of_memmory.c
+test_out_of_memmory_LDADD=libdumb-alloc.la
+
+test_checkered_alloc_SOURCES=$(common_test_sources) \
+ tests/test_checkered_alloc.c
+test_checkered_alloc_LDADD=libdumb-alloc.la
 
 AM_CFLAGS=-std=c89 -O0 -ggdb -Wall -Wextra -Wpedantic -Werror
 
@@ -37,4 +58,8 @@ spotless:
 	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'` && popd
 
 valgrind: $(check_PROGRAMS)
-	libtool --mode=execute valgrind -q ./test-dumb-alloc
+	libtool --mode=execute valgrind -q ./test_simple
+	libtool --mode=execute valgrind -q ./test_two_alloc
+	libtool --mode=execute valgrind -q ./test_free
+	libtool --mode=execute valgrind -q ./test_out_of_memmory
+	libtool --mode=execute valgrind -q ./test_checkered_alloc
