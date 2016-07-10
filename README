@@ -16,8 +16,12 @@ with existing implementations. Please do not confuse this with
 something intended to be useful for anything other than experimentation,
 self-education, and fun.
 
-See also: https://github.com/hoelzro/smart-alloc
-Smart Alloc - A memory allocator for C
+I would especially like to thank Rob (@hoelzro) for being interested in
+to exploring the idea together until we no longer shared a continent.
+
+You may wish to see Rob's repo:
+	https://github.com/hoelzro/smart-alloc
+	Smart Alloc - A memory allocator for C
 
 
 Building
