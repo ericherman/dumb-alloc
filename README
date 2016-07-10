@@ -11,9 +11,9 @@ It does these things now, but of course, I could improve it ...
  and perhaps I shall.
 
 It was fun to bring this to a point that it could be used as an
-alternative to malloc/free, however there is no goal of competing
-with existing implementations. Please do not confuse this with
-something intended to be useful for anything other than experimentation,
+alternative to malloc/free, however there is no goal of competing with
+existing implementations. Please do not confuse this with something
+intended to be useful for anything other than experimentation,
 self-education, and fun.
 
 I would especially like to thank Rob (@hoelzro) for being interested in
@@ -31,8 +31,8 @@ autoreconf -iv &&
  make &&
  make check &&
  echo "Success."
-sudo make install
-sudo ldconfig
+#sudo make install
+#sudo ldconfig
 
 
 License
