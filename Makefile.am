@@ -12,7 +12,7 @@ include_HEADERS=\
  src/dumb-os-alloc.h \
  src/dumb-printf-defines.h \
  src/dumb-alloc.h \
- src/dumb-alloc-global.h 
+ src/dumb-alloc-global.h
 
 TESTS=$(check_PROGRAMS)
 check_PROGRAMS=\
