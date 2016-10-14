@@ -236,19 +236,19 @@ static void _da_free(struct dumb_alloc *da, void *ptr)
 
 static void _dump_chunk(struct dumb_alloc_chunk *chunk)
 {
-	printf("chunk %p ( %" FMT_SIZE_T " )\n", (void *)chunk,
+	printf("chunk %p ( " FMT_SIZE_T " )\n", (void *)chunk,
 	       (CAST_SIZE_T) ((void *)chunk));
 	if (!chunk) {
 		return;
 	}
-	printf("\tstart: %p ( %" FMT_SIZE_T " )\n", (void *)chunk->start,
+	printf("\tstart: %p ( " FMT_SIZE_T " )\n", (void *)chunk->start,
 	       (CAST_SIZE_T) ((void *)chunk->start));
-	printf("\tavailable_length: %" FMT_SIZE_T "\n",
+	printf("\tavailable_length: " FMT_SIZE_T "\n",
 	       (CAST_SIZE_T) chunk->available_length);
 	printf("\tin_use: %d\n", chunk->in_use);
-	printf("\tprev: %p ( %" FMT_SIZE_T " )\n", (void *)chunk->prev,
+	printf("\tprev: %p ( " FMT_SIZE_T " )\n", (void *)chunk->prev,
 	       (CAST_SIZE_T) ((void *)chunk->prev));
-	printf("\tnext: %p ( %" FMT_SIZE_T " )\n", (void *)chunk->next,
+	printf("\tnext: %p ( " FMT_SIZE_T " )\n", (void *)chunk->next,
 	       (CAST_SIZE_T) ((void *)chunk->next));
 	if (chunk->next) {
 		_dump_chunk(chunk->next);
@@ -257,23 +257,23 @@ static void _dump_chunk(struct dumb_alloc_chunk *chunk)
 
 static void _dump_block(struct dumb_alloc_block *block)
 {
-	printf("block %p ( %" FMT_SIZE_T " )\n", (void *)block,
+	printf("block %p ( " FMT_SIZE_T " )\n", (void *)block,
 	       (CAST_SIZE_T) ((void *)block));
 	if (!block) {
 		return;
 	}
-	printf("\tregion_start: %p ( %" FMT_SIZE_T " )\n",
+	printf("\tregion_start: %p ( " FMT_SIZE_T " )\n",
 	       (void *)block->region_start,
 	       (CAST_SIZE_T) ((void *)block->region_start));
-	printf("\ttotal_length: %" FMT_SIZE_T "\n",
+	printf("\ttotal_length: " FMT_SIZE_T "\n",
 	       (CAST_SIZE_T) block->total_length);
-	printf("\tfirst_chunk: %p ( %" FMT_SIZE_T " )\n",
+	printf("\tfirst_chunk: %p ( " FMT_SIZE_T " )\n",
 	       (void *)block->first_chunk,
 	       (CAST_SIZE_T) ((void *)block->first_chunk));
 	if (block->first_chunk) {
 		_dump_chunk(block->first_chunk);
 	}
-	printf("\tnext_block: %p ( %" FMT_SIZE_T " )\n",
+	printf("\tnext_block: %p ( " FMT_SIZE_T " )\n",
 	       (void *)block->next_block,
 	       (CAST_SIZE_T) ((void *)block->next_block));
 	if (block->next_block) {
@@ -283,19 +283,19 @@ static void _dump_block(struct dumb_alloc_block *block)
 
 static void _dump(struct dumb_alloc *da)
 {
-	printf("sizeof(struct dumb_alloc): %" FMT_SIZEOF "\n",
+	printf("sizeof(struct dumb_alloc): " FMT_SIZEOF "\n",
 	       sizeof(struct dumb_alloc));
-	printf("sizeof(struct dumb_alloc_block): %" FMT_SIZEOF "\n",
+	printf("sizeof(struct dumb_alloc_block): " FMT_SIZEOF "\n",
 	       sizeof(struct dumb_alloc_block));
-	printf("sizeof(struct dumb_alloc_chunk): %" FMT_SIZEOF "\n",
+	printf("sizeof(struct dumb_alloc_chunk): " FMT_SIZEOF "\n",
 	       sizeof(struct dumb_alloc_chunk));
 
-	printf("context %p ( %" FMT_SIZE_T " )\n", (void *)da,
+	printf("context %p ( " FMT_SIZE_T " )\n", (void *)da,
 	       (CAST_SIZE_T) ((void *)da));
 	if (!da) {
 		return;
 	}
-	printf("\tblock: %p ( %" FMT_SIZE_T " )\n", da->data,
+	printf("\tblock: %p ( " FMT_SIZE_T " )\n", da->data,
 	       (CAST_SIZE_T) da->data);
 	if (da->data) {
 		_dump_block((struct dumb_alloc_block *)da->data);

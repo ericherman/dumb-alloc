@@ -1,3 +1,11 @@
+2016-10-15  Eric Herman <eric@freesa.org>
+
+	move the "%" inside the FMT_ #defines
+
+	* src/dumb-printf-defines.h": change the defines
+	* src/dumb-alloc.c: change the printf strings
+	* src/dumb-os-alloc.c: change the printf strings
+
 2016-07-08  Eric Herman <eric@freesa.org>
 
 	extracted five separate tests from original "main.c"
