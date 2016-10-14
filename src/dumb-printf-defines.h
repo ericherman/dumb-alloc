@@ -3,8 +3,8 @@
 
 #ifdef __LP64__			/* if 64 bit environment */
 #define FMT_SIZEOF "%lu"
-#define FMT_SIZE_T "%llu"
-#define CAST_SIZE_T unsigned long long
+#define FMT_SIZE_T "%lu"
+#define CAST_SIZE_T unsigned long
 #else
 #define FMT_SIZEOF "%u"
 #define FMT_SIZE_T "%u"

@@ -1,4 +1,11 @@
-2016-10-15  Eric Herman <eric@freesa.org>
+2016-10-14  Eric Herman <eric@freesa.org>
+
+	if 64bit, assume "size_t" is "unsigned long"
+		(rather than "unsigned long long")
+
+	* src/dumb-printf-defines.h: cast,printf from "%llu" to "%lu"
+
+2016-10-14  Eric Herman <eric@freesa.org>
 
 	move the "%" inside the FMT_ #defines
 
