@@ -1,6 +1,6 @@
-#include "dumb-alloc-private.h"	/* global->data->total_length */
-#include "dumb-alloc.h"
-#include "dumb-os-alloc.h"
+#include <dumb-alloc-private.h>	/* global->data->total_length */
+#include <dumb-alloc.h>
+#include <dumb-os-alloc.h>
 
 struct dumb_alloc *global = (struct dumb_alloc *)NULL;
 

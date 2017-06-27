@@ -1,5 +1,5 @@
-#include "dumb-os-alloc.h"
-#include "dumb-printf-defines.h"
+#include <dumb-os-alloc.h>
+#include <dumb-printf-defines.h>
 #include <sys/mman.h>
 #include <stdio.h>
 #include <unistd.h>

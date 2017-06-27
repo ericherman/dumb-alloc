@@ -1,7 +1,7 @@
 #ifndef DUMB_ALLOC_GLOBAL_H
 #define DUMB_ALLOC_GLOBAL_H
 
-#include "dumb-alloc.h"
+#include <dumb-alloc.h>
 
 /* global malloc/free compat fuctions */
 void *dumb_malloc(size_t request_size);

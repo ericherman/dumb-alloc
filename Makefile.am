@@ -3,14 +3,15 @@ lib_LTLIBRARIES=libdumb-alloc.la
 ACLOCAL_AMFLAGS=-I m4 --install
 
 libdumb_alloc_la_SOURCES=\
+ src/dumb-alloc-private.h \
+ src/dumb-printf-defines.h \
+ src/dumb-os-alloc.h \
+ $(include_HEADERS) \
  src/dumb-os-alloc.c \
  src/dumb-alloc-global.c \
  src/dumb-alloc.c
 
 include_HEADERS=\
- src/dumb-alloc-private.h \
- src/dumb-os-alloc.h \
- src/dumb-printf-defines.h \
  src/dumb-alloc.h \
  src/dumb-alloc-global.h
 
@@ -40,7 +41,7 @@ test_checkered_alloc_SOURCES=$(common_test_sources) \
  tests/test_checkered_alloc.c
 test_checkered_alloc_LDADD=libdumb-alloc.la
 
-AM_CFLAGS=-std=c89 -pipe -fomit-frame-pointer -O0 -ggdb -Wall -Wextra -Wpedantic -Werror
+AM_CFLAGS=-std=c89 -pipe -fomit-frame-pointer -O0 -ggdb -Wall -Wextra -Wpedantic -Werror -I./src
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
 LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0

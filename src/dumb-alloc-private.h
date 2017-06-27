@@ -1,7 +1,7 @@
 #ifndef DUMB_ALLOC_PRIVATE_H
 #define DUMB_ALLOC_PRIVATE_H
 
-#include "dumb-alloc.h"
+#include <dumb-alloc.h>
 
 struct dumb_alloc_chunk {
 	char *start;

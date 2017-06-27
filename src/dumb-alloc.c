@@ -1,6 +1,6 @@
-#include "dumb-alloc-private.h"
-#include "dumb-os-alloc.h"
-#include "dumb-printf-defines.h"
+#include <dumb-alloc-private.h>
+#include <dumb-os-alloc.h>
+#include <dumb-printf-defines.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

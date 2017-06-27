@@ -1,3 +1,16 @@
+2017-07-30  Eric Herman <eric@freesa.org>
+
+Fixup headers installation, to only install the non-private headers.
+Add -I./src to CFLAGS such that we can change inlcudes syntax from:
+#include "foo.h" to #include <foo.h>
+
+	* Makefile.am: fixup headers installation, -I./src
+	* src/dumb-alloc.c: include "foo" to inlcude <foo>
+	* src/dumb-alloc-global.c: "foo" to <foo>
+	* src/dumb-alloc-global.h: "foo" to <foo>
+	* src/dumb-alloc-private.h: "foo" to <foo>
+	* src/dumb-os-alloc.c: "foo" to <foo>
+
 2016-10-14  Eric Herman <eric@freesa.org>
 
 	if 64bit, assume "size_t" is "unsigned long"
