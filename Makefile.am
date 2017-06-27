@@ -40,7 +40,7 @@ test_checkered_alloc_SOURCES=$(common_test_sources) \
  tests/test_checkered_alloc.c
 test_checkered_alloc_LDADD=libdumb-alloc.la
 
-AM_CFLAGS=-std=c89 -O0 -ggdb -Wall -Wextra -Wpedantic -Werror
+AM_CFLAGS=-std=c89 -pipe -fomit-frame-pointer -O0 -ggdb -Wall -Wextra -Wpedantic -Werror
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
 LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
