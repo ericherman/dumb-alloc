@@ -41,8 +41,23 @@ test_checkered_alloc_SOURCES=$(common_test_sources) \
  tests/test_checkered_alloc.c
 test_checkered_alloc_LDADD=libdumb-alloc.la
 
-# AM_CFLAGS=-std=c89 -pipe -fomit-frame-pointer -DDEBUG -O0 -ggdb -Wall -Wextra -Wpedantic -Werror -I./src
-AM_CFLAGS=-std=c89 -pipe -fomit-frame-pointer -O2 -ggdb -Wall -Wextra -Wpedantic -Werror -I./src
+
+# would rather do "ifeq $(DEBUG)" but that doesn't work with automake :-(
+if DEBUG
+DEBUG_CFLAGS=-O0 -ggdb -DDEBUG
+else
+DEBUG_CFLAGS=-O2 -ggdb -DNDEBUG -fomit-frame-pointer
+endif
+
+CSTD_CFLAGS=-std=c89 -pedantic
+NOISY_CFLAGS=-Wall -Wextra -Wpedantic -Werror
+BASE_CFLAGS=-pipe -fdata-sections -I./src
+
+AM_CFLAGS=\
+ $(CSTD_CFLAGS) \
+ $(NOISY_CFLAGS) \
+ $(DEBUG_CFLAGS) \
+ $(BASE_CFLAGS)
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
 LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
