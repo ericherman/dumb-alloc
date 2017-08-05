@@ -4,7 +4,6 @@ ACLOCAL_AMFLAGS=-I m4 --install
 
 libdumb_alloc_la_SOURCES=\
  src/dumb-alloc-private.h \
- src/dumb-printf-defines.h \
  src/dumb-os-alloc.h \
  $(include_HEADERS) \
  src/dumb-os-alloc.c \
