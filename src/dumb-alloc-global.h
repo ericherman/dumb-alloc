@@ -5,6 +5,7 @@
 
 /* global malloc/free compat fuctions */
 void *dumb_malloc(size_t request_size);
+void *dumb_realloc(void *ptr, size_t request_size);
 void dumb_free(void *ptr);
 
 /* resets the global context and clears all memory */

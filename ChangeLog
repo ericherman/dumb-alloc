@@ -1,6 +1,18 @@
+2017-08-12  Eric Herman <eric@freesa.org>
+
+	Add "realloc" to the interface
+
+	* src/dumb-alloc.h: realloc
+	* src/dumb-alloc.c: realloc, some casting cleanu
+	* src/dumb-alloc-global.h: realloc
+	* src/dumb-alloc-global.c: realloc
+	* tests/test_checkered_realloc.c: test realloc
+	* Makefile.am: test_checkered_realloc
+	* .gitignore: test_checkered_realloc
+
 2017-08-05  Eric Herman <eric@freesa.org>
 
-remove dumb-printf-defines.h: simply always cast size_t to %lu
+	remove dumb-printf-defines.h: simply always cast size_t to %lu
 
 	* src/dumb-alloc.c: unconditionally cast to %lu
 	* src/dumb-os-alloc.c: unconditionally cast to %lu
@@ -10,9 +22,9 @@ remove dumb-printf-defines.h: simply always cast size_t to %lu
 
 2017-07-30  Eric Herman <eric@freesa.org>
 
-Fixup headers installation, to only install the non-private headers.
-Add -I./src to CFLAGS such that we can change inlcudes syntax from:
-#include "foo.h" to #include <foo.h>
+	Fixup headers installation, to only install the non-private headers.
+	Add -I./src to CFLAGS such that we can change inlcudes syntax from:
+	#include "foo.h" to #include <foo.h>
 
 	* Makefile.am: fixup headers installation, -I./src
 	* src/dumb-alloc.c: include "foo" to inlcude <foo>
@@ -42,7 +54,7 @@ Add -I./src to CFLAGS such that we can change inlcudes syntax from:
 
 	* tests/test-dumb-alloc.h: extracted from main.c
 	* tests/test_checkered_alloc.c: also
-	* tests/test_free.c: also 
+	* tests/test_free.c: also
 	* tests/test_out_of_memmory.c: also
 	* tests/test_simple.c: also
 	* tests/test_two_alloc.c: also

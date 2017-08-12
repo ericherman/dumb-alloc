@@ -35,6 +35,14 @@ void *dumb_malloc(size_t request_size)
 	return global->malloc(global, request_size);
 }
 
+void *dumb_realloc(void *ptr, size_t request_size)
+{
+	if (!global) {
+		_init_global();
+	}
+	return global->realloc(global, ptr, request_size);
+}
+
 void dumb_free(void *ptr)
 {
 	if (!global) {

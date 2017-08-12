@@ -20,7 +20,8 @@ check_PROGRAMS=\
  test_two_alloc \
  test_free \
  test_out_of_memmory \
- test_checkered_alloc
+ test_checkered_alloc \
+ test_checkered_realloc
 
 common_test_sources=$(include_HEADERS) tests/test-dumb-alloc.h
 
@@ -39,6 +40,10 @@ test_out_of_memmory_LDADD=libdumb-alloc.la
 test_checkered_alloc_SOURCES=$(common_test_sources) \
  tests/test_checkered_alloc.c
 test_checkered_alloc_LDADD=libdumb-alloc.la
+
+test_checkered_realloc_SOURCES=$(common_test_sources) \
+ tests/test_checkered_realloc.c
+test_checkered_realloc_LDADD=libdumb-alloc.la
 
 
 # would rather do "ifeq $(DEBUG)" but that doesn't work with automake :-(
@@ -79,3 +84,4 @@ valgrind: $(check_PROGRAMS)
 	libtool --mode=execute valgrind -q ./test_free
 	libtool --mode=execute valgrind -q ./test_out_of_memmory
 	libtool --mode=execute valgrind -q ./test_checkered_alloc
+	libtool --mode=execute valgrind -q ./test_checkered_realloc

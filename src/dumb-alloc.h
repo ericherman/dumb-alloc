@@ -6,6 +6,7 @@
 struct dumb_alloc {
 	/* public methods */
 	void *(*malloc) (struct dumb_alloc *da, size_t request);
+	void *(*realloc) (struct dumb_alloc *da, void *ptr, size_t request);
 	void (*free) (struct dumb_alloc *da, void *ptr);
 	void (*dump) (struct dumb_alloc *da);
 

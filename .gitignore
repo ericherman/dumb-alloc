@@ -3,6 +3,7 @@ test_two_alloc
 test_free
 test_out_of_memmory
 test_checkered_alloc
+test_checkered_realloc
 
 *.a
 *.d
