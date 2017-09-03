@@ -1,3 +1,12 @@
+2017-09-03  Eric Herman <eric@freesa.org>
+
+	be explicit about void parameter lists
+
+	* src/dumb-os-alloc.h: void foo();   ->   void foo(void);
+	* src/dumb-os-alloc.c: void foo(){}  ->   void foo(void){}
+	* src/dumb-alloc-global.h: void foo();   ->   void foo(void);
+	* src/dumb-alloc-global.c: void foo(){}  ->   void foo(void){}
+
 2017-08-12  Eric Herman <eric@freesa.org>
 
 	Add "realloc" to the interface
@@ -18,7 +27,6 @@
 	* src/dumb-os-alloc.c: unconditionally cast to %lu
 	* src/dumb-printf-defines.h: remove file
 	* Makefile.am: remove reference to dumb-printf-defines.h
-
 
 2017-07-30  Eric Herman <eric@freesa.org>
 

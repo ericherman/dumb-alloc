@@ -70,12 +70,12 @@ int dumb_os_munmap(void *addr, size_t bytes_length)
 	return munmap(addr, bytes_length);
 }
 
-size_t dumb_os_page_size()
+size_t dumb_os_page_size(void)
 {
 	return (size_t)sysconf(_SC_PAGESIZE);
 }
 
-size_t dumb_os_mem_limit()
+size_t dumb_os_mem_limit(void)
 {
 	return 1073741824;
 }
