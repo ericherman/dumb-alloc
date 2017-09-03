@@ -1,9 +1,11 @@
 2017-09-03  Eric Herman <eric@freesa.org>
 
+	#ifndef DUMB_ALLOC_MEM_LIMIT, use 1024^3;
 	be explicit about void parameter lists
 
+	* src/dumb-alloc.c: check if there *is* a limit before comparing
 	* src/dumb-os-alloc.h: void foo();   ->   void foo(void);
-	* src/dumb-os-alloc.c: void foo(){}  ->   void foo(void){}
+	* src/dumb-os-alloc.c: use DUMB_ALLOC_MEM_LIMIT, foo() -> foo(void)
 	* src/dumb-alloc-global.h: void foo();   ->   void foo(void);
 	* src/dumb-alloc-global.c: void foo(){}  ->   void foo(void){}
 
