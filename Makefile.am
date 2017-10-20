@@ -60,8 +60,9 @@ test_checkered_realloc_LDADD=libdumb-alloc.la
 
 
 # would rather do "ifeq $(DEBUG)" but that doesn't work with automake :-(
+# instead use "./configure --enable-debug"
 if DEBUG
-DEBUG_CFLAGS=-O0 -ggdb -DDEBUG
+DEBUG_CFLAGS=-O0 -ggdb -DDEBUG -fsanitize=address,leak,undefined
 else
 DEBUG_CFLAGS=-O2 -ggdb -DNDEBUG -fomit-frame-pointer
 endif
