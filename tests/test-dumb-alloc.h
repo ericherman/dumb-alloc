@@ -20,7 +20,7 @@ License (COPYING) along with this library; if not, see:
 */
 #include <stdio.h>
 #include <string.h>
-#include "../src/dumb-alloc-global.h"
+#include "../src/dumb-alloc.h"
 
 #define BIG_ALLOC 4000
 
@@ -32,7 +32,21 @@ void *d_malloc(size_t size)
 	if (!ptr) {
 		printf("\n");
 		printf("alloc returned NULL\n");
-		dumb_alloc_get_global()->dump(dumb_alloc_get_global());
+		dumb_alloc_to_string(stdout, dumb_alloc_get_global());
+		printf("FAIL\n");
+	}
+	return ptr;
+}
+
+void *d_calloc(size_t num, size_t size)
+{
+	void *ptr;
+
+	ptr = dumb_calloc(num, size);
+	if (!ptr) {
+		printf("\n");
+		printf("alloc returned NULL\n");
+		dumb_alloc_to_string(stdout, dumb_alloc_get_global());
 		printf("FAIL\n");
 	}
 	return ptr;
@@ -47,7 +61,7 @@ char compare_strings(const char *actual, const char *expected)
 	printf("\n");
 	printf("expected (%p) '%s' but was '%s'\n", (void *)expected, expected,
 	       actual);
-	dumb_alloc_get_global()->dump(dumb_alloc_get_global());
+	dumb_alloc_to_string(stdout, dumb_alloc_get_global());
 	printf("FAIL\n");
 	return 1;
 }

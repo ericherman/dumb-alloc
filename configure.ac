@@ -28,7 +28,7 @@ AC_PROG_CC
 # Checks for libraries.
 
 # Checks for header files.
-AC_CHECK_HEADERS([stddef.h stdlib.h string.h unistd.h])
+AC_CHECK_HEADERS([stdio.h stddef.h stdlib.h string.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
@@ -36,7 +36,7 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_MMAP
-AC_CHECK_FUNCS([munmap strerror])
+AC_CHECK_FUNCS([fprintf munmap strerror])
 
 AC_ARG_ENABLE(debug,
 AS_HELP_STRING([--enable-debug],

@@ -1,5 +1,5 @@
 # dumb-alloc: basic OO memory allocator with malloc/free wrappers
-# Copyright (C) 2012, 2017 Eric Herman <eric@freesa.org>
+# Copyright (C) 2012, 2017, 2020 Eric Herman <eric@freesa.org>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,26 +15,19 @@ lib_LTLIBRARIES=libdumb-alloc.la
 
 ACLOCAL_AMFLAGS=-I m4 --install
 
-libdumb_alloc_la_SOURCES=\
- src/dumb-alloc-private.h \
- src/dumb-os-alloc.h \
- $(include_HEADERS) \
- src/dumb-os-alloc.c \
- src/dumb-alloc-global.c \
- src/dumb-alloc.c
+include_HEADERS=src/dumb-alloc.h
 
-include_HEADERS=\
- src/dumb-alloc.h \
- src/dumb-alloc-global.h
+libdumb_alloc_la_SOURCES=$(include_HEADERS) src/dumb-alloc.c
 
 TESTS=$(check_PROGRAMS)
 check_PROGRAMS=\
  test_simple \
  test_two_alloc \
  test_free \
- test_out_of_memmory \
  test_checkered_alloc \
- test_checkered_realloc
+ test_checkered_realloc \
+ test_to_string \
+ test_out_of_memmory
 
 common_test_sources=$(include_HEADERS) tests/test-dumb-alloc.h
 
@@ -58,15 +51,24 @@ test_checkered_realloc_SOURCES=$(common_test_sources) \
  tests/test_checkered_realloc.c
 test_checkered_realloc_LDADD=libdumb-alloc.la
 
+test_to_string_SOURCES=$(common_test_sources) tests/test_to_string.c
+test_to_string_LDADD=libdumb-alloc.la
+test_to_string_CFLAGS=$(AM_CFLAGS) -D_GNU_SOURCE
 
 # would rather do "ifeq $(DEBUG)" but that doesn't work with automake :-(
 # instead use "./configure --enable-debug"
 if DEBUG
-DEBUG_CFLAGS=-O0 -ggdb -DDEBUG -fsanitize=address,leak,undefined
+BUILD_CFLAGS=-O0 -ggdb -DDEBUG \
+	-fsanitize=address,leak,undefined \
+	-fno-inline-small-functions \
+	-fkeep-inline-functions \
+	-fkeep-static-functions \
+	--coverage
 else
-DEBUG_CFLAGS=-O2 -ggdb -DNDEBUG -fomit-frame-pointer
+BUILD_CFLAGS=-O2 -ggdb -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
 endif
 
+# I wonder if we need -fno-strict-aliasing ....
 CSTD_CFLAGS=-std=c89 -pedantic
 NOISY_CFLAGS=-Wall -Wextra -Wpedantic -Werror
 BASE_CFLAGS=-pipe -fdata-sections -I./src
@@ -74,7 +76,7 @@ BASE_CFLAGS=-pipe -fdata-sections -I./src
 AM_CFLAGS=\
  $(CSTD_CFLAGS) \
  $(NOISY_CFLAGS) \
- $(DEBUG_CFLAGS) \
+ $(BUILD_CFLAGS) \
  $(BASE_CFLAGS)
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
@@ -93,9 +95,10 @@ spotless:
 	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'` && popd
 
 valgrind: $(check_PROGRAMS)
-	libtool --mode=execute valgrind -q ./test_simple
-	libtool --mode=execute valgrind -q ./test_two_alloc
-	libtool --mode=execute valgrind -q ./test_free
-	libtool --mode=execute valgrind -q ./test_out_of_memmory
-	libtool --mode=execute valgrind -q ./test_checkered_alloc
-	libtool --mode=execute valgrind -q ./test_checkered_realloc
+	./libtool --mode=execute valgrind -q ./test_simple
+	./libtool --mode=execute valgrind -q ./test_two_alloc
+	./libtool --mode=execute valgrind -q ./test_free
+	./libtool --mode=execute valgrind -q ./test_out_of_memmory
+	./libtool --mode=execute valgrind -q ./test_checkered_alloc
+	./libtool --mode=execute valgrind -q ./test_checkered_realloc
+	./libtool --mode=execute valgrind -q ./test_to_string

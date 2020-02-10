@@ -1,6 +1,6 @@
 /*
 dumb-alloc.c: OO memory allocator
-Copyright (C) 2012, 2017 Eric Herman <eric@freesa.org>
+Copyright (C) 2012, 2017, 2020 Eric Herman <eric@freesa.org>
 
 This work is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,26 +18,93 @@ License (COPYING) along with this library; if not, see:
 
         https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
 */
-#include <dumb-alloc-private.h>
-#include <dumb-os-alloc.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <assert.h>
+
+#include <dumb-alloc.h>
+
+#ifndef Dumb_alloc_memset
+#define Dumb_alloc_memset(ptr, val, len) memset(ptr, val, len)
+#endif
+
+#ifdef __unix__
+
+#include <sys/mman.h>
+#include <unistd.h>
+
+#ifndef MAP_ANONYMOUS
+#ifdef MAP_ANON
+#define MAP_ANONYMOUS MAP_ANON
+#else
+/* from: /usr/include/asm-generic/mman-common.h */
+#define MAP_ANONYMOUS 0x20	/* don't use a file */
+#endif
+#endif
+
+static void *dumb_alloc_os_alloc_linux(void *context, size_t bytes_length);
+#define Dumb_alloc_os_alloc dumb_alloc_os_alloc_linux
+
+static int dumb_alloc_os_free_linux(void *context, void *addr,
+				    size_t bytes_length);
+#define Dumb_alloc_os_free dumb_alloc_os_free_linux
+
+static size_t dumb_alloc_os_page_size_linux(void *context);
+#define Dumb_alloc_os_page_size dumb_alloc_os_page_size_linux
+
+#endif /* __unix__ */
+
+#ifndef Dumb_alloc_os_alloc
+#define Dumb_alloc_os_alloc dumb_alloc_no_alloc
+#define Dumb_alloc_os_free dumb_alloc_no_free
+#define Dumb_alloc_os_page_size dumb_alloc_no_page_size
+#endif /* Dumb_alloc_os_alloc */
+
+struct dumb_alloc_chunk {
+	char *start;
+	size_t available_length;
+	char in_use;
+	struct dumb_alloc_chunk *prev;
+	struct dumb_alloc_chunk *next;
+};
+
+struct dumb_alloc_block {
+	char *region_start;
+	size_t total_length;
+	struct dumb_alloc_chunk *first_chunk;
+	struct dumb_alloc_block *next_block;
+};
+
+struct dumb_alloc_data {
+	struct dumb_alloc_block *block;
+	dumb_alloc_os_alloc_func os_alloc;
+	dumb_alloc_os_free_func os_free;
+	dumb_alloc_os_page_size_func os_page_size;
+	void *os_context;
+};
+
+struct dumb_alloc *dumb_alloc_global = NULL;
 
 static void *_da_alloc(struct dumb_alloc *da, size_t request);
+static void *_da_calloc(struct dumb_alloc *da, size_t nmemb, size_t request);
 static void *_da_realloc(struct dumb_alloc *da, void *ptr, size_t request);
 static void _da_free(struct dumb_alloc *da, void *ptr);
-static void _dump_chunk(struct dumb_alloc_chunk *chunk);
-static void _dump_block(struct dumb_alloc_block *block);
-static void _dump(struct dumb_alloc *da);
 static void _chunk_join_next(struct dumb_alloc_chunk *chunk);
+static struct dumb_alloc_data *_da_data(struct dumb_alloc *da);
+
+static void _dump_chunk(FILE *log, struct dumb_alloc_chunk *chunk);
+static void _dump_block(FILE *log, struct dumb_alloc_block *block);
 
 static void _init_chunk(struct dumb_alloc_chunk *chunk, size_t available_length)
 {
-	chunk->start = ((char *)chunk) + sizeof(struct dumb_alloc_chunk);
-	chunk->available_length =
-	    available_length - sizeof(struct dumb_alloc_chunk);
+	size_t size;
+
+	size = sizeof(struct dumb_alloc_chunk);
+	chunk->start = ((char *)chunk) + size;
+	chunk->available_length = available_length - size;
 	chunk->in_use = 0;
 	chunk->prev = (struct dumb_alloc_chunk *)NULL;
 	chunk->next = (struct dumb_alloc_chunk *)NULL;
@@ -48,59 +115,178 @@ static struct dumb_alloc_block *_init_block(char *memory, size_t region_size,
 {
 	struct dumb_alloc_block *block;
 	size_t block_available_length;
+	size_t size;
 
 	block = (struct dumb_alloc_block *)(memory + initial_overhead);
 	block->region_start = memory;
 	block->total_length = region_size;
 	block->next_block = (struct dumb_alloc_block *)NULL;
 
+	size = sizeof(struct dumb_alloc_block);
 	block->first_chunk =
-	    (struct dumb_alloc_chunk *)(((char *)block) +
-					sizeof(struct dumb_alloc_block));
+	    (struct dumb_alloc_chunk *)(((char *)block) + size);
 
 	block_available_length =
-	    block->total_length - (initial_overhead +
-				   sizeof(struct dumb_alloc_block));
+	    block->total_length - (initial_overhead + size);
 	_init_chunk(block->first_chunk, block_available_length);
 	return block;
 }
 
-void dumb_alloc_init(struct dumb_alloc *da, char *memory, size_t length,
-		     size_t overhead)
+static void *dumb_alloc_no_alloc(void *context, size_t length)
+{
+	assert(context == NULL);
+	if (length) {
+		return NULL;
+	}
+	return NULL;
+}
+
+static int dumb_alloc_no_free(void *context, void *addr, size_t bytes_length)
+{
+	assert(context == NULL);
+	if (addr || bytes_length) {
+		errno = EINVAL;
+		return -1;
+	}
+	return 0;
+}
+
+static size_t dumb_alloc_no_page_size(void *context)
+{
+	assert(context == NULL);
+	return 1;
+}
+
+static struct dumb_alloc_data *_init_data(char *memory, size_t region_size,
+					  size_t initial_overhead,
+					  dumb_alloc_os_alloc_func os_alloc,
+					  dumb_alloc_os_free_func os_free,
+					  dumb_alloc_os_page_size_func
+					  os_page_size, void *os_context)
+{
+	struct dumb_alloc_data *data;
+	size_t data_overhead;
+
+	data = (struct dumb_alloc_data *)(memory + initial_overhead);
+
+	data->os_alloc = os_alloc ? os_alloc : dumb_alloc_no_alloc;
+	data->os_free = os_free ? os_free : dumb_alloc_no_free;
+	data->os_page_size =
+	    os_page_size ? os_page_size : dumb_alloc_no_page_size;
+	data->os_context = os_context;
+
+	data_overhead = initial_overhead + sizeof(struct dumb_alloc_data);
+	data->block = _init_block(memory, region_size, data_overhead);
+
+	return data;
+}
+
+void dumb_alloc_init_custom(struct dumb_alloc *da, char *memory, size_t length,
+			    size_t overhead, dumb_alloc_os_alloc_func os_alloc,
+			    dumb_alloc_os_free_func os_free,
+			    dumb_alloc_os_page_size_func os_page_size,
+			    void *os_context)
 {
 	da->malloc = _da_alloc;
+	da->calloc = _da_calloc;
 	da->realloc = _da_realloc;
 	da->free = _da_free;
-	da->dump = _dump;
-	da->data = _init_block(memory, length, overhead);
+	da->data =
+	    _init_data(memory, length, overhead, os_alloc, os_free,
+		       os_page_size, os_context);
+}
+
+struct dumb_alloc *dumb_alloc_os_new(void)
+{
+	char *memory;
+	size_t length;
+	size_t overhead;
+	void *context;
+	struct dumb_alloc *os_dumb_allocator;
+
+	context = NULL;
+	length = Dumb_alloc_os_page_size(context);
+	memory = Dumb_alloc_os_alloc(context, length);
+	if (!memory) {
+		return NULL;
+	}
+	os_dumb_allocator = (struct dumb_alloc *)memory;
+	overhead = sizeof(struct dumb_alloc);
+
+	dumb_alloc_init_custom(os_dumb_allocator, memory, length, overhead,
+			       Dumb_alloc_os_alloc, Dumb_alloc_os_free,
+			       Dumb_alloc_os_page_size, context);
+
+	return os_dumb_allocator;
+}
+
+void dumb_alloc_os_free(struct dumb_alloc *os_dumb_allocator)
+{
+	struct dumb_alloc_data *data;
+	struct dumb_alloc_block *block;
+	size_t len;
+
+	data = (struct dumb_alloc_data *)os_dumb_allocator->data;
+	block = data->block;
+	len = block->total_length;
+	Dumb_alloc_os_free(data->os_context, os_dumb_allocator, len);
+}
+
+void dumb_alloc_init(struct dumb_alloc *da, char *memory, size_t length)
+{
+	dumb_alloc_init_custom(da, memory, length, 0, NULL, NULL, NULL, NULL);
+}
+
+static struct dumb_alloc_data *_da_data(struct dumb_alloc *da)
+{
+	struct dumb_alloc_data *data;
+
+	data = (struct dumb_alloc_data *)da->data;
+
+	return data;
 }
 
 static struct dumb_alloc_block *_first_block(struct dumb_alloc *da)
 {
+	struct dumb_alloc_data *data;
 	struct dumb_alloc_block *block;
 
-	block = (struct dumb_alloc_block *)da->data;
+	data = _da_data(da);
+	block = data->block;
 
 	return block;
 }
 
+#ifndef DUMB_ALLOC_WORDSIZE
+#ifdef __WORDSIZE
+#define DUMB_ALLOC_WORDSIZE __WORDSIZE
+#else
+#define DUMB_ALLOC_WORDSIZE 16
+#endif /* __WORDSIZE */
+#endif /* DUMB_ALLOC_WORDSIZE */
+
+#define Dumb_alloc_align(x) \
+	(((x) + ((DUMB_ALLOC_WORDSIZE) - 1)) & ~((DUMB_ALLOC_WORDSIZE) - 1))
+
 static void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 {
 	size_t remaining_available_length;
+	size_t aligned_request;
 
+	aligned_request = Dumb_alloc_align(request);
 	from->in_use = 1;
 
-	if ((request + sizeof(struct dumb_alloc_chunk)) >=
+	if ((aligned_request + sizeof(struct dumb_alloc_chunk)) >=
 	    from->available_length) {
 		return;
 	}
 
-	remaining_available_length = from->available_length - request;
+	remaining_available_length = from->available_length - aligned_request;
 	if (remaining_available_length <= sizeof(struct dumb_alloc_chunk)) {
 		return;
 	}
 
-	from->available_length = request;
+	from->available_length = aligned_request;
 	from->next =
 	    (struct dumb_alloc_chunk *)(from->start + from->available_length);
 
@@ -111,11 +297,15 @@ static void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 static void *_da_alloc(struct dumb_alloc *da, size_t request)
 {
 	char *memory;
+	struct dumb_alloc_data *data;
 	struct dumb_alloc_block *last_block;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
+	size_t page_size;
+	size_t unaligned_min_needed;
 	size_t min_needed;
 	size_t needed;
+	size_t unaligned_requested;
 	size_t requested;
 	size_t total_mem;
 	size_t overhead_consumed;
@@ -123,6 +313,7 @@ static void *_da_alloc(struct dumb_alloc *da, size_t request)
 	if (!da) {
 		return NULL;
 	}
+	data = _da_data(da);
 	block = _first_block(da);
 	while (block != NULL) {
 		for (chunk = block->first_chunk; chunk != NULL;
@@ -144,33 +335,19 @@ static void *_da_alloc(struct dumb_alloc *da, size_t request)
 		total_mem += last_block->total_length;
 	}
 
-	min_needed =
+	unaligned_min_needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
-	if (dumb_os_mem_limit()
-	    && (min_needed + total_mem > dumb_os_mem_limit())) {
-		errno = ENOMEM;
-		return NULL;
-	}
+	min_needed = Dumb_alloc_align(unaligned_min_needed);
 	needed = min_needed + (2 * last_block->total_length);
 
-	requested = dumb_os_page_size() * (1 + (needed / dumb_os_page_size()));
-	if (dumb_os_mem_limit()
-	    && (requested + total_mem > dumb_os_mem_limit())) {
-		memory = NULL;
-	} else {
-		memory = dumb_os_mmap(requested);
-	}
+	page_size = data->os_page_size(data->os_context);
+	unaligned_requested = page_size * (1 + (needed / page_size));
+	requested = Dumb_alloc_align(unaligned_requested);
+	memory = data->os_alloc(data->os_context, requested);
+
 	if (!memory) {
-		requested = min_needed;
-		requested =
-		    dumb_os_page_size() * (1 +
-					   (min_needed / dumb_os_page_size()));
-		if (requested + total_mem > dumb_os_mem_limit()) {
-			errno = ENOMEM;
-			return NULL;
-		}
-		memory = dumb_os_mmap(requested);
+		memory = data->os_alloc(data->os_context, min_needed);
 		if (!memory) {
 			errno = ENOMEM;
 			return NULL;
@@ -182,6 +359,20 @@ static void *_da_alloc(struct dumb_alloc *da, size_t request)
 	chunk = block->first_chunk;
 	_split_chunk(chunk, request);
 	return chunk->start;
+}
+
+static void *_da_calloc(struct dumb_alloc *da, size_t nmemb, size_t request)
+{
+	void *ptr;
+	size_t len;
+
+	len = nmemb * request;
+	ptr = _da_alloc(da, len);
+	if (!ptr) {
+		return NULL;
+	}
+	Dumb_alloc_memset(ptr, 0x00, len);
+	return ptr;
 }
 
 /* The  realloc()  function  changes  the  size  of  the memory
@@ -290,16 +481,19 @@ char _chunks_in_use(struct dumb_alloc_block *block)
 
 static void _release_unused_block(struct dumb_alloc *da)
 {
+	struct dumb_alloc_data *data;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_block *block_prev;
 
+	data = _da_data(da);
 	block = _first_block(da);
 	while (block != NULL) {
 		block_prev = block;
 		block = block->next_block;
 		if (block && !_chunks_in_use(block)) {
 			block_prev->next_block = block->next_block;
-			dumb_os_munmap(block, block->total_length);
+			data->os_free(data->os_context, block,
+				      block->total_length);
 			block = block_prev->next_block;
 		}
 	}
@@ -337,74 +531,172 @@ static void _da_free(struct dumb_alloc *da, void *ptr)
 		}
 		block = block->next_block;
 	}
-	/*
-	   printf("chunk for %p not found!\n", ptr);
-	   da->dump(da);
-	 */
-	return;
 }
 
-static void _dump_chunk(struct dumb_alloc_chunk *chunk)
+static void _dump_chunk(FILE *log, struct dumb_alloc_chunk *chunk)
 {
-	printf("chunk %p ( %lu )\n", (void *)chunk,
-	       (unsigned long)((void *)chunk));
+	fprintf(log, "chunk:  %p ( %lu )\n", (void *)chunk,
+		(unsigned long)((void *)chunk));
 	if (!chunk) {
 		return;
 	}
-	printf("\tstart: %p ( %lu )\n", (void *)chunk->start,
-	       (unsigned long)((void *)chunk->start));
-	printf("\tavailable_length: %lu\n",
-	       (unsigned long)chunk->available_length);
-	printf("\tin_use: %d\n", chunk->in_use);
-	printf("\tprev: %p ( %lu )\n", (void *)chunk->prev,
-	       (unsigned long)((void *)chunk->prev));
-	printf("\tnext: %p ( %lu )\n", (void *)chunk->next,
-	       (unsigned long)((void *)chunk->next));
+	fprintf(log, "\tstart: %p ( %lu )\n", (void *)chunk->start,
+		(unsigned long)((void *)chunk->start));
+	fprintf(log, "\tavailable_length: %lu\n",
+		(unsigned long)chunk->available_length);
+	fprintf(log, "\tin_use: %lu\n", (unsigned long)chunk->in_use);
+	fprintf(log, "\tprev:  %p ( %lu )\n", (void *)chunk->prev,
+		(unsigned long)((void *)chunk->prev));
+	fprintf(log, "\tnext:  %p ( %lu )\n", (void *)chunk->next,
+		(unsigned long)((void *)chunk->next));
 	if (chunk->next) {
-		_dump_chunk(chunk->next);
+		_dump_chunk(log, chunk->next);
 	}
 }
 
-static void _dump_block(struct dumb_alloc_block *block)
+static void _dump_block(FILE *log, struct dumb_alloc_block *block)
 {
-	printf("block %p ( %lu )\n", (void *)block,
-	       (unsigned long)((void *)block));
+	fprintf(log, "block:  %p ( %lu )\n", (void *)block,
+		(unsigned long)((void *)block));
 	if (!block) {
 		return;
 	}
-	printf("\tregion_start: %p ( %lu )\n",
-	       (void *)block->region_start,
-	       (unsigned long)((void *)block->region_start));
-	printf("\ttotal_length: %lu\n", (unsigned long)block->total_length);
-	printf("\tfirst_chunk: %p ( %lu )\n",
-	       (void *)block->first_chunk,
-	       (unsigned long)((void *)block->first_chunk));
+	fprintf(log, "\tregion_start: %p ( %lu )\n",
+		(void *)block->region_start,
+		(unsigned long)((void *)block->region_start));
+	fprintf(log, "\ttotal_length: %lu\n",
+		(unsigned long)block->total_length);
+	fprintf(log, "\tfirst_chunk:  %p ( %lu )\n", (void *)block->first_chunk,
+		(unsigned long)((void *)block->first_chunk));
 	if (block->first_chunk) {
-		_dump_chunk(block->first_chunk);
+		_dump_chunk(log, block->first_chunk);
 	}
-	printf("\tnext_block: %p ( %lu )\n",
-	       (void *)block->next_block,
-	       (unsigned long)((void *)block->next_block));
+	fprintf(log, "\tnext_block:   %p ( %lu )\n",
+		(void *)block->next_block,
+		(unsigned long)((void *)block->next_block));
 	if (block->next_block) {
-		_dump_block(block->next_block);
+		_dump_block(log, block->next_block);
 	}
 }
 
-static void _dump(struct dumb_alloc *da)
+void dumb_alloc_to_string(FILE *log, struct dumb_alloc *da)
 {
-	printf("sizeof(struct dumb_alloc): %lu\n",
-	       (unsigned long)sizeof(struct dumb_alloc));
-	printf("sizeof(struct dumb_alloc_block): %lu\n",
-	       (unsigned long)sizeof(struct dumb_alloc_block));
-	printf("sizeof(struct dumb_alloc_chunk): %lu\n",
-	       (unsigned long)sizeof(struct dumb_alloc_chunk));
+	struct dumb_alloc_data *data;
+	struct dumb_alloc_block *block;
 
-	printf("context %p ( %lu )\n", (void *)da, (unsigned long)((void *)da));
+	fprintf(log, "sizeof(struct dumb_alloc): %lu\n",
+		(unsigned long)sizeof(struct dumb_alloc));
+	fprintf(log, "sizeof(struct dumb_alloc_data): %lu\n",
+		(unsigned long)sizeof(struct dumb_alloc_data));
+	fprintf(log, "sizeof(struct dumb_alloc_block): %lu\n",
+		(unsigned long)sizeof(struct dumb_alloc_block));
+	fprintf(log, "sizeof(struct dumb_alloc_chunk): %lu\n",
+		(unsigned long)sizeof(struct dumb_alloc_chunk));
+
+	fprintf(log, "context %p ( %lu )\n", (void *)da,
+		(unsigned long)((void *)da));
 	if (!da) {
 		return;
 	}
-	printf("\tblock: %p ( %lu )\n", da->data, (unsigned long)da->data);
+	data = _da_data(da);
+	fprintf(log, "\tdata:  %p ( %lu )\n", (void *)data,
+		(unsigned long)data);
+	block = _first_block(da);
+	fprintf(log, "\tblock: %p ( %lu )\n", (void *)block,
+		(unsigned long)block);
 	if (da->data) {
-		_dump_block((struct dumb_alloc_block *)da->data);
+		_dump_block(log, _da_data(da)->block);
 	}
 }
+
+void dumb_alloc_set_global(struct dumb_alloc *da)
+{
+	dumb_alloc_global = da;
+}
+
+struct dumb_alloc *dumb_alloc_get_global(void)
+{
+	return dumb_alloc_global;
+}
+
+void *dumb_malloc(size_t request_size)
+{
+	if (!dumb_alloc_global) {
+		dumb_alloc_global = dumb_alloc_os_new();
+	}
+	if (!dumb_alloc_global) {
+		return NULL;
+	}
+	return dumb_alloc_global->malloc(dumb_alloc_global, request_size);
+}
+
+void *dumb_calloc(size_t nmemb, size_t size)
+{
+	if (!dumb_alloc_global) {
+		dumb_alloc_global = dumb_alloc_os_new();
+	}
+	if (!dumb_alloc_global) {
+		return NULL;
+	}
+	return dumb_alloc_global->calloc(dumb_alloc_global, nmemb, size);
+}
+
+void *dumb_realloc(void *ptr, size_t request_size)
+{
+	if (!dumb_alloc_global) {
+		dumb_alloc_global = dumb_alloc_os_new();
+	}
+	if (!dumb_alloc_global) {
+		return NULL;
+	}
+	return dumb_alloc_global->realloc(dumb_alloc_global, ptr, request_size);
+}
+
+void dumb_free(void *ptr)
+{
+	if (!dumb_alloc_global) {
+		/*
+		   printf("NO GLOBAL CONTEXT! global: %p\n",
+		   (void *)global);
+		 */
+		return;
+	}
+	dumb_alloc_global->free(dumb_alloc_global, ptr);
+}
+
+void dumb_alloc_reset_global()
+{
+	if (dumb_alloc_global) {
+		dumb_alloc_os_free(dumb_alloc_global);
+	}
+	dumb_alloc_global = (struct dumb_alloc *)NULL;
+}
+
+#ifdef __unix__
+
+static void *dumb_alloc_os_alloc_linux(void *context, size_t length)
+{
+	void *addr = NULL;
+	int prot = PROT_READ | PROT_WRITE;
+	int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+	int fd = -1;
+	int offset = 0;
+
+	assert(context == NULL);
+	return mmap(addr, length, prot, flags, fd, offset);
+}
+
+static int dumb_alloc_os_free_linux(void *context, void *addr,
+				    size_t bytes_length)
+{
+	assert(context == NULL);
+	return munmap(addr, bytes_length);
+}
+
+static size_t dumb_alloc_os_page_size_linux(void *context)
+{
+	assert(context == NULL);
+	return (size_t)sysconf(_SC_PAGESIZE);
+}
+
+#endif /* __unix__ */

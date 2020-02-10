@@ -37,7 +37,7 @@ char test_two_alloc(void)
 
 	printf("test_two_alloc ...");
 
-	dumb_reset();
+	dumb_alloc_reset_global();
 
 	message1 = dumb_dup("Hello");
 	message2 = dumb_dup("World");

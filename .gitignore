@@ -4,6 +4,7 @@ test_free
 test_out_of_memmory
 test_checkered_alloc
 test_checkered_realloc
+test_to_string
 
 *.a
 *.d
@@ -32,6 +33,10 @@ test_checkered_realloc
 *.bck
 $*
 *.000
+*.gcda
+*.gcno
+coverage.info
+coverage_html/
 
 ################
 # autotools junk

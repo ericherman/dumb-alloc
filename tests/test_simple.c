@@ -20,14 +20,14 @@ License (COPYING) along with this library; if not, see:
 */
 #include "test-dumb-alloc.h"
 
-char test_simple(void)
+char test_simple_malloc(void)
 {
 	const char *expected;
 	char *actual;
 
-	dumb_reset();
+	dumb_alloc_reset_global();
 
-	printf("test_simple ...");
+	printf("test_simple_malloc ...");
 	expected = "Hello, World!";
 	actual = (char *)d_malloc(14);
 	if (!actual) {
@@ -44,6 +44,40 @@ char test_simple(void)
 	dumb_free(actual);
 	printf(".\n");
 	return 0;
+}
+
+char test_simple_calloc(void)
+{
+	const char *expected;
+	char *actual;
+
+	dumb_alloc_reset_global();
+
+	printf("test_simple_calloc ...");
+	expected = "";
+	actual = (char *)d_calloc(5, sizeof(int));
+	if (!actual) {
+		return 3;
+	}
+
+	strcpy(actual, expected);
+
+	if (compare_strings(actual, expected)) {
+		return 4;
+	}
+
+	printf(" ok");
+	dumb_free(actual);
+	printf(".\n");
+	return 0;
+}
+
+char test_simple(void)
+{
+	int failures = 0;
+	failures += test_simple_malloc();
+	failures += test_simple_calloc();
+	return failures;
 }
 
 TEST_DUMB_ALLOC_MAIN(test_simple())
