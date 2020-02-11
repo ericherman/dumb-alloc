@@ -294,6 +294,24 @@ static void _split_chunk(struct dumb_alloc_chunk *from, size_t request)
 	from->next->prev = from;
 }
 
+static size_t align_to_page_size(struct dumb_alloc_data *data, size_t wanted)
+{
+	size_t page_size;
+	size_t odd;
+	size_t pages_wanted;
+	size_t unaligned_requested;
+	size_t requested;
+
+	page_size = data->os_page_size(data->os_context);
+
+	odd = (wanted % page_size == 0) ? 0 : 1;
+	pages_wanted = (wanted / page_size) + odd;
+	unaligned_requested = page_size * pages_wanted;
+	requested = Dumb_alloc_align(unaligned_requested);
+
+	return requested;
+}
+
 static void *_da_alloc(struct dumb_alloc *da, size_t request)
 {
 	char *memory;
@@ -301,13 +319,10 @@ static void *_da_alloc(struct dumb_alloc *da, size_t request)
 	struct dumb_alloc_block *last_block;
 	struct dumb_alloc_block *block;
 	struct dumb_alloc_chunk *chunk;
-	size_t page_size;
 	size_t unaligned_min_needed;
-	size_t min_needed;
-	size_t needed;
-	size_t unaligned_requested;
+	size_t greedy;
+	size_t wanted;
 	size_t requested;
-	size_t total_mem;
 	size_t overhead_consumed;
 
 	if (!da) {
@@ -329,25 +344,22 @@ static void *_da_alloc(struct dumb_alloc *da, size_t request)
 	}
 
 	last_block = _first_block(da);
-	total_mem = last_block->total_length;
 	while (last_block->next_block != NULL) {
 		last_block = last_block->next_block;
-		total_mem += last_block->total_length;
 	}
 
 	unaligned_min_needed =
 	    request + sizeof(struct dumb_alloc_block) +
 	    sizeof(struct dumb_alloc_chunk);
-	min_needed = Dumb_alloc_align(unaligned_min_needed);
-	needed = min_needed + (2 * last_block->total_length);
-
-	page_size = data->os_page_size(data->os_context);
-	unaligned_requested = page_size * (1 + (needed / page_size));
-	requested = Dumb_alloc_align(unaligned_requested);
+	greedy = 2 * last_block->total_length;
+	wanted = unaligned_min_needed + greedy;
+	requested = align_to_page_size(data, wanted);
 	memory = data->os_alloc(data->os_context, requested);
 
 	if (!memory) {
-		memory = data->os_alloc(data->os_context, min_needed);
+		/* Last effort, try again for just the bare minimum: */
+		requested = align_to_page_size(data, unaligned_min_needed);
+		memory = data->os_alloc(data->os_context, requested);
 		if (!memory) {
 			errno = ENOMEM;
 			return NULL;
