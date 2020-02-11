@@ -33,7 +33,7 @@ char test_free(void)
 	mem1 = (char *)dumb_malloc(BIG_ALLOC);
 	dumb_free(mem1);
 	if (mem1 == NULL) {
-		printf("\n\texpected not-null, but was %p\n", mem1);
+		printf("\n\texpected not-null, but was %p\n", (void *)mem1);
 		dumb_alloc_to_string(stdout, dumb_alloc_get_global());
 		printf("FAIL\n");
 		return 1;
@@ -44,7 +44,7 @@ char test_free(void)
 	mem3 = (char *)dumb_malloc(BIG_ALLOC);
 
 	if (mem3 == NULL) {
-		printf("\n\texpected not-null, but was %p\n", mem3);
+		printf("\n\texpected not-null, but was %p\n", (void *)mem3);
 		dumb_alloc_to_string(stdout, dumb_alloc_get_global());
 		printf("FAIL\n");
 		return 1;
