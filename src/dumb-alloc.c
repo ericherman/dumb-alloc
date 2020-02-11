@@ -31,7 +31,7 @@ License (COPYING) along with this library; if not, see:
 #define Dumb_alloc_memset(ptr, val, len) memset(ptr, val, len)
 #endif
 
-#ifdef __unix__
+#ifdef __linux__
 
 #include <sys/mman.h>
 #include <unistd.h>
@@ -55,7 +55,7 @@ static int dumb_alloc_os_free_linux(void *context, void *addr,
 static size_t dumb_alloc_os_page_size_linux(void *context);
 #define Dumb_alloc_os_page_size dumb_alloc_os_page_size_linux
 
-#endif /* __unix__ */
+#endif /* __linux__ */
 
 #ifndef Dumb_alloc_os_alloc
 #define Dumb_alloc_os_alloc dumb_alloc_no_alloc
@@ -672,7 +672,7 @@ void dumb_alloc_reset_global()
 	dumb_alloc_global = (struct dumb_alloc *)NULL;
 }
 
-#ifdef __unix__
+#ifdef __linux__
 
 static void *dumb_alloc_os_alloc_linux(void *context, size_t length)
 {
@@ -699,4 +699,4 @@ static size_t dumb_alloc_os_page_size_linux(void *context)
 	return (size_t)sysconf(_SC_PAGESIZE);
 }
 
-#endif /* __unix__ */
+#endif /* __linux__ */
