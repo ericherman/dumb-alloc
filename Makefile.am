@@ -27,6 +27,7 @@ check_PROGRAMS=\
  test_checkered_alloc \
  test_checkered_realloc \
  test_to_string \
+ test_big_allocs \
  test_out_of_memmory
 
 common_test_sources=$(include_HEADERS) tests/test-dumb-alloc.h
@@ -36,6 +37,9 @@ test_simple_LDADD=libdumb-alloc.la
 
 test_two_alloc_SOURCES=$(common_test_sources) tests/test_two_alloc.c
 test_two_alloc_LDADD=libdumb-alloc.la
+
+test_big_allocs_SOURCES=$(common_test_sources) tests/test_big_allocs.c
+test_big_allocs_LDADD=libdumb-alloc.la
 
 test_free_SOURCES=$(common_test_sources) tests/test_free.c
 test_free_LDADD=libdumb-alloc.la
@@ -102,3 +106,4 @@ valgrind: $(check_PROGRAMS)
 	./libtool --mode=execute valgrind -q ./test_checkered_alloc
 	./libtool --mode=execute valgrind -q ./test_checkered_realloc
 	./libtool --mode=execute valgrind -q ./test_to_string
+	./libtool --mode=execute valgrind -q ./test_big_allocs
