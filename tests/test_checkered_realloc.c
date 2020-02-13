@@ -62,6 +62,18 @@ char test_checkered_alloc(void)
 		}
 	}
 
+	for (i = 0; i < 10; i += 2) {
+		pointers[i] = D_realloc(pointers[i], 190);
+		if (!pointers[i]) {
+			printf("2) expected a pointer for %i\n", i);
+			printf("FAIL\n");
+			return 1;
+		}
+		for (j = 0; j < 190; j++) {
+			pointers[i][j] = 1;
+		}
+	}
+
 	printf(" ok");
 	for (i = 0; i < 10; ++i) {
 		if (pointers[i]) {

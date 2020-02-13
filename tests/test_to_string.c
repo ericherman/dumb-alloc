@@ -33,7 +33,7 @@ int test_to_string(void)
 	dumb_alloc_set_global(&da);
 
 	for (i = 0; i < 1; ++i) {
-		things[i] = dumb_malloc(i + 1);
+		things[i] = dumb_malloc(i + 500);
 	}
 	dumb_alloc_to_string(memfile, dumb_alloc_get_global());
 	fflush(memfile);

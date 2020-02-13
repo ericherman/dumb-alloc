@@ -22,26 +22,37 @@ License (COPYING) along with this library; if not, see:
 
 char test_simple_malloc(void)
 {
+	struct dumb_alloc da;
 	const char *expected;
 	char *actual;
+	char bootstrap_bytes[512];
+	size_t i;
 
 	dumb_alloc_reset_global();
 
+	dumb_alloc_init(&da, bootstrap_bytes, 512);
+
+	dumb_alloc_set_global(&da);
+
 	printf("test_simple_malloc ...");
-	expected = "Hello, World!";
-	actual = (char *)d_malloc(14);
-	if (!actual) {
-		return 1;
-	}
 
-	strcpy(actual, expected);
+	for (i = 0; i < 10; ++i) {
+		expected = "Hello, World!";
+		actual = (char *)d_malloc(14);
+		if (!actual) {
+			return 1;
+		}
 
-	if (compare_strings(actual, expected)) {
-		return 2;
+		strcpy(actual, expected);
+
+		if (compare_strings(actual, expected)) {
+			return 2;
+		}
+		dumb_free(actual);
 	}
 
 	printf(" ok");
-	dumb_free(actual);
+	dumb_alloc_set_global(NULL);
 	printf(".\n");
 	return 0;
 }

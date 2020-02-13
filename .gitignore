@@ -2,7 +2,7 @@ test_big_allocs
 test_checkered_alloc
 test_checkered_realloc
 test_free
-test_out_of_memmory
+test_out_of_memory
 test_simple
 test_to_string
 test_two_alloc

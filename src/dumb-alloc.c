@@ -31,7 +31,23 @@ License (COPYING) along with this library; if not, see:
 #define Dumb_alloc_memset(ptr, val, len) memset(ptr, val, len)
 #endif
 
-#ifdef __linux__
+#ifndef Dumb_alloc_posixy_mmap
+#if ( __APPLE__ && __MACH__ )
+#define Dumb_alloc_posixy_mmap 1
+#endif
+#endif
+
+#ifndef Dumb_alloc_posixy_mmap
+#if ( __linux__ || __unix__ )
+#define Dumb_alloc_posixy_mmap 1
+#endif
+#endif
+
+#ifndef Dumb_alloc_posixy_mmap
+#define Dumb_alloc_posixy_mmap 0
+#endif
+
+#if Dumb_alloc_posixy_mmap
 
 #include <sys/mman.h>
 #include <unistd.h>
@@ -55,7 +71,7 @@ static int dumb_alloc_os_free_linux(void *context, void *addr,
 static size_t dumb_alloc_os_page_size_linux(void *context);
 #define Dumb_alloc_os_page_size dumb_alloc_os_page_size_linux
 
-#endif /* __linux__ */
+#endif /* Dumb_alloc_posix_like */
 
 #ifndef Dumb_alloc_os_alloc
 #define Dumb_alloc_os_alloc dumb_alloc_no_alloc
@@ -94,6 +110,13 @@ static void *_da_realloc(struct dumb_alloc *da, void *ptr, size_t request);
 static void _da_free(struct dumb_alloc *da, void *ptr);
 static void _chunk_join_next(struct dumb_alloc_chunk *chunk);
 static struct dumb_alloc_data *_da_data(struct dumb_alloc *da);
+
+static void _dumb_alloc_init_custom_inner(struct dumb_alloc *da, char *memory,
+					  size_t length, size_t overhead,
+					  dumb_alloc_os_alloc_func os_alloc,
+					  dumb_alloc_os_free_func os_free,
+					  dumb_alloc_os_page_size_func
+					  os_page_size, void *os_context);
 
 static void _dump_chunk(FILE *log, struct dumb_alloc_chunk *chunk);
 static void _dump_block(FILE *log, struct dumb_alloc_block *block);
@@ -181,11 +204,12 @@ static struct dumb_alloc_data *_init_data(char *memory, size_t region_size,
 	return data;
 }
 
-void dumb_alloc_init_custom(struct dumb_alloc *da, char *memory, size_t length,
-			    size_t overhead, dumb_alloc_os_alloc_func os_alloc,
-			    dumb_alloc_os_free_func os_free,
-			    dumb_alloc_os_page_size_func os_page_size,
-			    void *os_context)
+static void _dumb_alloc_init_custom_inner(struct dumb_alloc *da, char *memory,
+					  size_t length, size_t overhead,
+					  dumb_alloc_os_alloc_func os_alloc,
+					  dumb_alloc_os_free_func os_free,
+					  dumb_alloc_os_page_size_func
+					  os_page_size, void *os_context)
 {
 	da->malloc = _da_alloc;
 	da->calloc = _da_calloc;
@@ -194,6 +218,18 @@ void dumb_alloc_init_custom(struct dumb_alloc *da, char *memory, size_t length,
 	da->data =
 	    _init_data(memory, length, overhead, os_alloc, os_free,
 		       os_page_size, os_context);
+}
+
+void dumb_alloc_init_custom(struct dumb_alloc *da, char *memory, size_t length,
+			    dumb_alloc_os_alloc_func os_alloc,
+			    dumb_alloc_os_free_func os_free,
+			    dumb_alloc_os_page_size_func os_page_size,
+			    void *os_context)
+{
+	size_t overhead = 0;
+
+	_dumb_alloc_init_custom_inner(da, memory, length, overhead, os_alloc,
+				      os_free, os_page_size, os_context);
 }
 
 struct dumb_alloc *dumb_alloc_os_new(void)
@@ -213,9 +249,10 @@ struct dumb_alloc *dumb_alloc_os_new(void)
 	os_dumb_allocator = (struct dumb_alloc *)memory;
 	overhead = sizeof(struct dumb_alloc);
 
-	dumb_alloc_init_custom(os_dumb_allocator, memory, length, overhead,
-			       Dumb_alloc_os_alloc, Dumb_alloc_os_free,
-			       Dumb_alloc_os_page_size, context);
+	_dumb_alloc_init_custom_inner(os_dumb_allocator, memory, length,
+				      overhead, Dumb_alloc_os_alloc,
+				      Dumb_alloc_os_free,
+				      Dumb_alloc_os_page_size, context);
 
 	return os_dumb_allocator;
 }
@@ -234,7 +271,7 @@ void dumb_alloc_os_free(struct dumb_alloc *os_dumb_allocator)
 
 void dumb_alloc_init(struct dumb_alloc *da, char *memory, size_t length)
 {
-	dumb_alloc_init_custom(da, memory, length, 0, NULL, NULL, NULL, NULL);
+	dumb_alloc_init_custom(da, memory, length, NULL, NULL, NULL, NULL);
 }
 
 static struct dumb_alloc_data *_da_data(struct dumb_alloc *da)
@@ -683,7 +720,7 @@ void dumb_alloc_reset_global()
 	dumb_alloc_global = (struct dumb_alloc *)NULL;
 }
 
-#ifdef __linux__
+#if Dumb_alloc_posixy_mmap
 
 static void *dumb_alloc_os_alloc_linux(void *context, size_t length)
 {
@@ -710,4 +747,4 @@ static size_t dumb_alloc_os_page_size_linux(void *context)
 	return (size_t)sysconf(_SC_PAGESIZE);
 }
 
-#endif /* __linux__ */
+#endif /* Dumb_alloc_posixy_mmap */

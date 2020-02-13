@@ -43,7 +43,7 @@ typedef size_t (*dumb_alloc_os_page_size_func)(void *context);
 void dumb_alloc_init(struct dumb_alloc *da, char *memory, size_t length);
 
 void dumb_alloc_init_custom(struct dumb_alloc *da, char *memory, size_t length,
-			    size_t overhead, dumb_alloc_os_alloc_func os_alloc,
+			    dumb_alloc_os_alloc_func os_alloc,
 			    dumb_alloc_os_free_func os_free,
 			    dumb_alloc_os_page_size_func os_page_size,
 			    void *os_context);
