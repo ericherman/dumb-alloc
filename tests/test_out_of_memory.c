@@ -123,10 +123,8 @@ char test_out_of_memory_inner(unsigned long malloc_fail_bitmask)
 			       test_os_alloc, test_os_free, test_os_page_size,
 			       &mctx);
 
-	dumb_alloc_set_global(&da);
-
 	for (i = 0; i < 10; ++i) {
-		message = d_malloc(183);
+		message = da.malloc(&da, 183);
 		if (message) {
 			memset(message, ('A' + i), 183);
 			message[10] = '\0';
@@ -136,17 +134,15 @@ char test_out_of_memory_inner(unsigned long malloc_fail_bitmask)
 	for (i = 10; i > 2; i -= 2) {
 		j = i - 1;
 		message = messages[j];
-		dumb_free(message);
+		da.free(&da, message);
 		messages[j] = NULL;
 	}
 	for (i = 10; i; --i) {
 		j = i - 1;
 		message = messages[i - 1];
-		dumb_free(message);
+		da.free(&da, message);
 		messages[j] = NULL;
 	}
-
-	dumb_alloc_set_global(NULL);
 
 	failures += ((mctx.frees == mctx.allocs) ? 0 : 1);
 	failures += ((mctx.free_bytes == mctx.alloc_bytes) ? 0 : 1);
