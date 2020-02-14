@@ -23,6 +23,7 @@ TESTS=$(check_PROGRAMS)
 check_PROGRAMS=\
  test_simple \
  test_two_alloc \
+ test_pool \
  test_free \
  test_checkered_alloc \
  test_checkered_realloc \
@@ -58,6 +59,10 @@ test_checkered_realloc_LDADD=libdumb-alloc.la
 test_to_string_SOURCES=$(common_test_sources) tests/test_to_string.c
 test_to_string_LDADD=libdumb-alloc.la
 test_to_string_CFLAGS=$(AM_CFLAGS) -D_GNU_SOURCE
+
+test_pool_SOURCES=$(common_test_sources) tests/test_pool.c
+test_pool_LDADD=libdumb-alloc.la
+test_pool_CFLAGS=$(AM_CFLAGS) -D_GNU_SOURCE
 
 # would rather do "ifeq $(DEBUG)" but that doesn't work with automake :-(
 # instead use "./configure --enable-debug"
@@ -101,6 +106,7 @@ spotless:
 valgrind: $(check_PROGRAMS)
 	./libtool --mode=execute valgrind -q ./test_simple
 	./libtool --mode=execute valgrind -q ./test_two_alloc
+	./libtool --mode=execute valgrind -q ./test_pool
 	./libtool --mode=execute valgrind -q ./test_free
 	./libtool --mode=execute valgrind -q ./test_out_of_memory
 	./libtool --mode=execute valgrind -q ./test_checkered_alloc
