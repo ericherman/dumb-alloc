@@ -36,7 +36,7 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_MMAP
-AC_CHECK_FUNCS([fprintf munmap strerror])
+AC_CHECK_FUNCS([fprintf mmap munmap sysconf strerror])
 
 AC_ARG_ENABLE(debug,
 AS_HELP_STRING([--enable-debug],

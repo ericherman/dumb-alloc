@@ -20,6 +20,49 @@ License (COPYING) along with this library; if not, see:
 */
 #include "test-dumb-alloc.h"
 
+char test_simple_malloc_size_0(void)
+{
+	void *actual;
+
+	printf("test_simple_malloc_size_0 ...");
+
+	actual = dumb_malloc(0);
+	if (actual) {
+		return 1;
+	}
+
+	printf(" ok\n");
+	return 0;
+
+}
+
+char test_simple_calloc_size_0(void)
+{
+	void *actual;
+	size_t nmemb;
+	size_t size;
+
+	printf("test_simple_calloc_size_0 ...");
+
+	nmemb = 10;
+	size = 0;
+	actual = dumb_calloc(nmemb, size);
+	if (actual) {
+		return 1;
+	}
+
+	nmemb = 0;
+	size = 64;
+	actual = dumb_calloc(nmemb, size);
+	if (actual) {
+		return 1;
+	}
+
+	printf(" ok\n");
+	return 0;
+
+}
+
 char test_simple_malloc(void)
 {
 	struct dumb_alloc da;
@@ -88,6 +131,8 @@ char test_simple(void)
 	int failures = 0;
 	failures += test_simple_malloc();
 	failures += test_simple_calloc();
+	failures += test_simple_malloc_size_0();
+	failures += test_simple_calloc_size_0();
 	return failures;
 }
 

@@ -55,6 +55,7 @@ char test_checkered_realloc(void)
 		}
 		_fill_for_debug(pointers[i], '0' + i, len);
 	}
+
 	for (i = 1; i < 10; i += 2) {
 		pointers[i] = D_realloc(pointers[i], 0);
 	}
@@ -69,22 +70,35 @@ char test_checkered_realloc(void)
 		}
 		_fill_for_debug(pointers[i], 'A' + i, len);
 	}
-/*
+
 	for (i = 1; i < 10; i += 4) {
 		pointers[i] = D_realloc(pointers[i], 0);
 	}
-*/
 
 	for (i = 0; i < 10; i += 2) {
 		if (pointers[i]) {
 			pointers[i] = D_realloc(pointers[i], len);
 			if (!pointers[i]) {
-				printf("2) expected a pointer for %i\n", i);
+				printf("3) expected a pointer for %i\n", i);
 				printf("FAIL\n");
 				return 1;
 			}
 			_fill_for_debug(pointers[i], 'a' + i, len);
 		}
+	}
+
+	for (i = 0; i < 10; i += 3) {
+		pointers[i] = D_realloc(pointers[i], 0);
+	}
+	len = len * 4;
+	for (i = 1; i < 8; ++i) {
+		pointers[i] = D_realloc(pointers[i], len);
+		if (!pointers[i]) {
+			printf("4) expected a pointer for %i\n", i);
+			printf("FAIL\n");
+			return 1;
+		}
+		_fill_for_debug(pointers[i], '0' + i, len);
 	}
 
 	printf(" ok");
@@ -94,6 +108,7 @@ char test_checkered_realloc(void)
 		}
 	}
 	printf(".\n");
+
 	return 0;
 }
 
