@@ -28,60 +28,73 @@ License (COPYING) along with this library; if not, see:
 #define D_realloc(ptr, n) dumb_realloc((ptr),(n))
 #endif
 
-char test_checkered_alloc(void)
+static void _fill_for_debug(char *dest, char v, size_t len)
 {
-	int i;
-	int j;
+	memset(dest, v, len);
+	dest[len - 1] = '\0';
+	if (len > 10) {
+		dest[10] = '\0';
+	}
+}
+
+char test_checkered_realloc(void)
+{
 	char *pointers[10];
+	int i;
+	size_t len;
 
 	printf("test_checkered_realloc ...");
 
+	len = 40;
 	for (i = 0; i < 10; i++) {
-		pointers[i] = D_realloc(NULL, 100);
+		pointers[i] = D_realloc(NULL, len);
 		if (!pointers[i]) {
 			printf("1) expected a pointer for %i\n", i);
 			printf("FAIL\n");
 			return 1;
 		}
-		for (j = 0; j < 100; j++) {
-			pointers[i][j] = 1;
-		}
+		_fill_for_debug(pointers[i], '0' + i, len);
 	}
 	for (i = 1; i < 10; i += 2) {
 		pointers[i] = D_realloc(pointers[i], 0);
 	}
+
+	len = len + (len / 2);
 	for (i = 0; i < 10; i += 2) {
-		pointers[i] = D_realloc(pointers[i], 190);
+		pointers[i] = D_realloc(pointers[i], len);
 		if (!pointers[i]) {
 			printf("2) expected a pointer for %i\n", i);
 			printf("FAIL\n");
 			return 1;
 		}
-		for (j = 0; j < 190; j++) {
-			pointers[i][j] = 1;
-		}
+		_fill_for_debug(pointers[i], 'A' + i, len);
 	}
+/*
+	for (i = 1; i < 10; i += 4) {
+		pointers[i] = D_realloc(pointers[i], 0);
+	}
+*/
 
 	for (i = 0; i < 10; i += 2) {
-		pointers[i] = D_realloc(pointers[i], 190);
-		if (!pointers[i]) {
-			printf("2) expected a pointer for %i\n", i);
-			printf("FAIL\n");
-			return 1;
-		}
-		for (j = 0; j < 190; j++) {
-			pointers[i][j] = 1;
+		if (pointers[i]) {
+			pointers[i] = D_realloc(pointers[i], len);
+			if (!pointers[i]) {
+				printf("2) expected a pointer for %i\n", i);
+				printf("FAIL\n");
+				return 1;
+			}
+			_fill_for_debug(pointers[i], 'a' + i, len);
 		}
 	}
 
 	printf(" ok");
 	for (i = 0; i < 10; ++i) {
 		if (pointers[i]) {
-			D_realloc(pointers[i], 0);
+			pointers[i] = D_realloc(pointers[i], 0);
 		}
 	}
 	printf(".\n");
 	return 0;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_checkered_alloc())
+TEST_DUMB_ALLOC_MAIN(test_checkered_realloc())

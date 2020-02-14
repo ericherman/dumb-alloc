@@ -31,6 +31,10 @@ License (COPYING) along with this library; if not, see:
 #define Dumb_alloc_memset(ptr, val, len) memset(ptr, val, len)
 #endif
 
+#ifndef Dumb_alloc_memcpy
+#define Dumb_alloc_memcpy(dest, src, len) memcpy(dest, src, len)
+#endif
+
 #ifndef Dumb_alloc_posixy_mmap
 #if ( __APPLE__ && __MACH__ )
 #define Dumb_alloc_posixy_mmap 1
@@ -443,6 +447,8 @@ static void *_da_realloc(struct dumb_alloc *da, void *ptr, size_t request)
 	struct dumb_alloc_block *block = NULL;
 	struct dumb_alloc_chunk *chunk = NULL;
 	size_t old_size = 0;
+	int found = 0;
+	void *new_ptr = NULL;
 
 	if (!da) {
 		return NULL;
@@ -456,46 +462,52 @@ static void *_da_realloc(struct dumb_alloc *da, void *ptr, size_t request)
 		return NULL;
 	}
 
+	found = 0;
 	old_size = 0;
 	block = _first_block(da);
-	while (block != NULL) {
-		for (chunk = block->first_chunk; old_size == 0 && chunk != NULL;
-		     chunk = chunk->next) {
+	while (block != NULL && !found) {
+		chunk = block->first_chunk;
+		while (chunk != NULL && !found) {
 			if (ptr == chunk->start) {
+				found = 1;
 				old_size = chunk->available_length;
+			} else {
+				chunk = chunk->next;
 			}
 		}
-		block = (old_size == 0) ? block->next_block : NULL;
+		if (!found) {
+			block = block->next_block;
+		}
 	}
 
-	if (old_size == 0) {
+	if (!found) {
+		errno = EINVAL;
 		return NULL;
 	}
 
-	if (old_size == request) {
-		return chunk->start;
-	}
-
-	if (old_size > request) {
+	if (old_size >= request) {
 		_split_chunk(chunk, request);
-		return chunk->start;
+		return ptr;
 	}
 
 	if (chunk->next && chunk->next->in_use == 0) {
 		_chunk_join_next(chunk);
-		if (chunk->available_length < request) {
+		if (chunk->available_length <= request) {
+			Dumb_alloc_memset(((char *)ptr) + old_size, 0x00,
+					  chunk->available_length - old_size);
 			_split_chunk(chunk, request);
-			return chunk->start;
-		}
-		if (chunk->available_length == request) {
-			return chunk->start;
+			return ptr;
 		}
 	}
 
-	ptr = _da_alloc(da, request);
-	memcpy(ptr, chunk->start, old_size);
-	_da_free(da, chunk->start);
-	return ptr;
+	new_ptr = _da_alloc(da, request);
+	Dumb_alloc_memset(new_ptr, 0x00, request);
+	Dumb_alloc_memcpy(new_ptr, ptr, old_size);
+
+	_da_free(da, ptr);
+	ptr = NULL;
+
+	return new_ptr;
 }
 
 static void _chunk_join_next(struct dumb_alloc_chunk *chunk)
