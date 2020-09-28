@@ -18,21 +18,25 @@ License (COPYING) along with this library; if not, see:
 
         https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
 */
-#include "test-dumb-alloc.h"
+#include "dumb-alloc-test.h"
 
-char test_checkered_alloc(void)
+int test_checkered_alloc(void)
 {
-	int i;
-	int j;
-	char *pointers[10];
+	int i = 0;
+	int j = 0;
+	char *pointers[10] =
+	    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-	printf("test_checkered_alloc ...");
+	Dumb_alloc_debug_prints("test_checkered_alloc ...");
+	dumb_alloc_test_reset_global();
 
 	for (i = 0; i < 10; i++) {
-		pointers[i] = dumb_malloc(100);
+		pointers[i] = (char *)dumb_malloc(100);
 		if (!pointers[i]) {
-			printf("1) expected a pointer for %i\n", i);
-			printf("FAIL\n");
+			Dumb_alloc_debug_prints("1) expected a pointer for ");
+			Dumb_alloc_debug_printz(i);
+			Dumb_alloc_debug_prints("\n");
+			Dumb_alloc_debug_prints("FAIL\n");
 			return 1;
 		}
 		for (j = 0; j < 100; j++) {
@@ -43,10 +47,12 @@ char test_checkered_alloc(void)
 		dumb_free(pointers[i]);
 	}
 	for (i = 1; i < 10; i += 2) {
-		pointers[i] = dumb_malloc(90);
+		pointers[i] = (char *)dumb_malloc(90);
 		if (!pointers[i]) {
-			printf("2) expected a pointer for %i\n", i);
-			printf("FAIL\n");
+			Dumb_alloc_debug_prints("2) expected a pointer for ");
+			Dumb_alloc_debug_printz(i);
+			Dumb_alloc_debug_prints("\n");
+			Dumb_alloc_debug_prints("FAIL\n");
 			return 1;
 		}
 		for (j = 0; j < 90; j++) {
@@ -54,12 +60,12 @@ char test_checkered_alloc(void)
 		}
 	}
 
-	printf(" ok");
+	Dumb_alloc_debug_prints(" ok");
 	for (i = 0; i < 10; i++) {
 		dumb_free(pointers[i]);
 	}
-	printf(".\n");
+	Dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_checkered_alloc())
+TEST_DUMB_ALLOC_MAIN(test_checkered_alloc)

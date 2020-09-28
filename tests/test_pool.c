@@ -3,26 +3,32 @@
 /* Copyright (C) 2020 Eric Herman <eric@freesa.org> */
 /* http://github.com/ericherman/dumb-alloc/ */
 
-#include "test-dumb-alloc.h"
+#include "dumb-alloc-test.h"
 
-char test_pool(void)
+char *keys[500];
+
+int test_pool(void)
 {
 	struct dumb_alloc pool;
-	char bootstrap_bytes[512];
-	char *keys[500];
 	char buf[80];
-	char *key;
-	size_t i;
+	char *key = NULL;
+	size_t i = 0;
+	size_t len = 0;
 
-	dumb_alloc_init(&pool, bootstrap_bytes, 512);
+	Dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
+			  dumb_alloc_test_global_buffer_len);
 
-	printf("test_pool ...");
+	dumb_alloc_init(&pool, dumb_alloc_test_global_buffer,
+			dumb_alloc_test_global_buffer_len);
+
+	Dumb_alloc_debug_prints("test_pool ...");
 
 	for (i = 0; i < 500; ++i) {
-		sprintf(buf, "%04lu", i);
-		key = (char *)pool.malloc(&pool, 1 + strlen(buf));
+		dumb_alloc_size_to_hex(buf, 80, i);
+		len = 1 + Dumb_alloc_test_strnlen(buf, 80);
+		key = (char *)pool.malloc(&pool, len);
 		if (key) {
-			strcpy(key, buf);
+			Dumb_alloc_test_strcpy(key, buf);
 		}
 		keys[i] = key;
 	}
@@ -36,9 +42,9 @@ char test_pool(void)
 		pool.free(&pool, keys[i]);
 	}
 
-	printf(" ok");
-	printf(".\n");
+	Dumb_alloc_debug_prints(" ok");
+	Dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_pool())
+TEST_DUMB_ALLOC_MAIN(test_pool)

@@ -1,3 +1,32 @@
+2020-09-29  Eric Herman <eric@freesa.org>
+
+	API breaking change: to_string now takes a logger object
+	rather than assuming fprintf and a expecting a FILE pointer.
+
+	Prepare for use in freestanding/embedded environments
+	Use macros for std libc functions
+	More clear names for "readelf -s" grep-ing
+	test with ./configure --enable-fauxfreestanding
+	Reduce memory footprint on tests to require only small amounts
+	of memory and only require very shallow stacks.
+
+	* src/dumb-alloc.h: change to_string
+	* src/dumb-alloc.c: establish DUMB_ALLOC_HOSTED, remove fprintf
+	* tests/dumb-alloc-test.h: removed most libc references
+	* tests/test-dumb-alloc.h: renamed to tests/dumb-alloc-test.h:
+	* tests/dumb-alloc-test.c: common code, some poor-libc if freestanding
+	* tests/test_big_allocs.c: ready for freestanding
+	* tests/test_checkered_alloc.c:
+	* tests/test_checkered_realloc.c:
+	* tests/test_free.c:
+	* tests/test_out_of_memory.c:
+	* tests/test_pool.c:
+	* tests/test_simple.c:
+	* tests/test_to_string.c:
+	* tests/test_two_alloc.c:
+	* configure.ac: ./configure --enable-fauxfreestanding
+	* Makefile.am: support -DFAUX_FREESTANDING=1 -DDUMB_ALLOC_HOSTED=0
+
 2020-02-14  Eric Herman <eric@freesa.org>
 
 	Introduce a pool allocator, no use of mmap

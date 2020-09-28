@@ -18,31 +18,33 @@ License (COPYING) along with this library; if not, see:
 
         https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
 */
-#include "test-dumb-alloc.h"
+#include "dumb-alloc-test.h"
 
-char test_simple_malloc_size_0(void)
+int test_simple_malloc_size_0(void)
 {
-	void *actual;
+	void *actual = NULL;
 
-	printf("test_simple_malloc_size_0 ...");
+	Dumb_alloc_debug_prints("test_simple_malloc_size_0 ...");
+	dumb_alloc_test_reset_global();
 
 	actual = dumb_malloc(0);
 	if (actual) {
 		return 1;
 	}
 
-	printf(" ok\n");
+	Dumb_alloc_debug_prints(" ok\n");
 	return 0;
 
 }
 
-char test_simple_calloc_size_0(void)
+int test_simple_calloc_size_0(void)
 {
-	void *actual;
-	size_t nmemb;
-	size_t size;
+	void *actual = NULL;
+	size_t nmemb = 0;
+	size_t size = 0;
 
-	printf("test_simple_calloc_size_0 ...");
+	Dumb_alloc_debug_prints("test_simple_calloc_size_0 ...");
+	dumb_alloc_test_reset_global();
 
 	nmemb = 10;
 	size = 0;
@@ -58,26 +60,19 @@ char test_simple_calloc_size_0(void)
 		return 1;
 	}
 
-	printf(" ok\n");
+	Dumb_alloc_debug_prints(" ok\n");
 	return 0;
 
 }
 
-char test_simple_malloc(void)
+int test_simple_malloc(void)
 {
-	struct dumb_alloc da;
-	const char *expected;
-	char *actual;
-	char bootstrap_bytes[512];
-	size_t i;
+	const char *expected = NULL;
+	char *actual = NULL;
+	size_t i = 0;
 
-	dumb_alloc_reset_global();
-
-	dumb_alloc_init(&da, bootstrap_bytes, 512);
-
-	dumb_alloc_set_global(&da);
-
-	printf("test_simple_malloc ...");
+	Dumb_alloc_debug_prints("test_simple_malloc ...");
+	dumb_alloc_test_reset_global();
 
 	for (i = 0; i < 10; ++i) {
 		expected = "Hello, World!";
@@ -86,47 +81,47 @@ char test_simple_malloc(void)
 			return 1;
 		}
 
-		strcpy(actual, expected);
+		Dumb_alloc_test_strcpy(actual, expected);
 
-		if (compare_strings(actual, expected)) {
+		if (dumb_alloc_test_compare_strings(actual, expected)) {
 			return 2;
 		}
 		dumb_free(actual);
 	}
 
-	printf(" ok");
+	Dumb_alloc_debug_prints(" ok");
 	dumb_alloc_set_global(NULL);
-	printf(".\n");
+	Dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
-char test_simple_calloc(void)
+int test_simple_calloc(void)
 {
-	const char *expected;
-	char *actual;
+	const char *expected = NULL;
+	char *actual = NULL;
 
-	dumb_alloc_reset_global();
+	Dumb_alloc_debug_prints("test_simple_calloc ...");
+	dumb_alloc_test_reset_global();
 
-	printf("test_simple_calloc ...");
 	expected = "";
 	actual = (char *)d_calloc(5, sizeof(int));
 	if (!actual) {
 		return 3;
 	}
 
-	strcpy(actual, expected);
+	Dumb_alloc_test_strcpy(actual, expected);
 
-	if (compare_strings(actual, expected)) {
+	if (dumb_alloc_test_compare_strings(actual, expected)) {
 		return 4;
 	}
 
-	printf(" ok");
+	Dumb_alloc_debug_prints(" ok");
 	dumb_free(actual);
-	printf(".\n");
+	Dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
-char test_simple(void)
+int test_simple(void)
 {
 	int failures = 0;
 	failures += test_simple_malloc();
@@ -136,4 +131,4 @@ char test_simple(void)
 	return failures;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_simple())
+TEST_DUMB_ALLOC_MAIN(test_simple)

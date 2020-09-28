@@ -19,68 +19,69 @@ License (COPYING) along with this library; if not, see:
         https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
 */
 
-#include "test-dumb-alloc.h"
+#include "dumb-alloc-test.h"
 
-#ifdef USE_LIBC_REALLOC
-#include <stdlib.h>
-#define D_realloc(ptr, n) realloc((ptr),(n))
-#else
 #define D_realloc(ptr, n) dumb_realloc((ptr),(n))
-#endif
 
 static void _fill_for_debug(char *dest, char v, size_t len)
 {
-	memset(dest, v, len);
+	Dumb_alloc_memset(dest, v, len);
 	dest[len - 1] = '\0';
 	if (len > 10) {
 		dest[10] = '\0';
 	}
 }
 
-char test_checkered_realloc(void)
+int test_checkered_realloc(void)
 {
-	char *pointers[10];
-	int i;
-	size_t len;
+	char *pointers[10] =
+	    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	size_t i = 0;
+	size_t len = 0;
 
-	printf("test_checkered_realloc ...");
+	Dumb_alloc_debug_prints("test_checkered_realloc ...");
+	dumb_alloc_test_reset_global();
 
 	len = 40;
 	for (i = 0; i < 10; i++) {
-		pointers[i] = D_realloc(NULL, len);
+		pointers[i] = (char *)D_realloc(NULL, len);
 		if (!pointers[i]) {
-			printf("1) expected a pointer for %i\n", i);
-			printf("FAIL\n");
+			Dumb_alloc_debug_prints("1) expected a pointer for ");
+			Dumb_alloc_debug_printz(i);
+			Dumb_alloc_debug_prints("\nFAIL\n");
 			return 1;
 		}
 		_fill_for_debug(pointers[i], '0' + i, len);
 	}
 
 	for (i = 1; i < 10; i += 2) {
-		pointers[i] = D_realloc(pointers[i], 0);
+		pointers[i] = (char *)D_realloc(pointers[i], 0);
 	}
 
 	len = len + (len / 2);
 	for (i = 0; i < 10; i += 2) {
-		pointers[i] = D_realloc(pointers[i], len);
+		pointers[i] = (char *)D_realloc(pointers[i], len);
 		if (!pointers[i]) {
-			printf("2) expected a pointer for %i\n", i);
-			printf("FAIL\n");
+			Dumb_alloc_debug_prints("2) expected a pointer for ");
+			Dumb_alloc_debug_printz(i);
+			Dumb_alloc_debug_prints("\nFAIL\n");
 			return 1;
 		}
 		_fill_for_debug(pointers[i], 'A' + i, len);
 	}
 
 	for (i = 1; i < 10; i += 4) {
-		pointers[i] = D_realloc(pointers[i], 0);
+		pointers[i] = (char *)D_realloc(pointers[i], 0);
 	}
 
 	for (i = 0; i < 10; i += 2) {
 		if (pointers[i]) {
-			pointers[i] = D_realloc(pointers[i], len);
+			pointers[i] = (char *)D_realloc(pointers[i], len);
 			if (!pointers[i]) {
-				printf("3) expected a pointer for %i\n", i);
-				printf("FAIL\n");
+				Dumb_alloc_debug_prints
+				    ("3) expected a pointer for ");
+				Dumb_alloc_debug_printz(i);
+				Dumb_alloc_debug_prints("\nFAIL\n");
 				return 1;
 			}
 			_fill_for_debug(pointers[i], 'a' + i, len);
@@ -88,28 +89,29 @@ char test_checkered_realloc(void)
 	}
 
 	for (i = 0; i < 10; i += 3) {
-		pointers[i] = D_realloc(pointers[i], 0);
+		pointers[i] = (char *)D_realloc(pointers[i], 0);
 	}
 	len = len * 4;
 	for (i = 1; i < 8; ++i) {
-		pointers[i] = D_realloc(pointers[i], len);
+		pointers[i] = (char *)D_realloc(pointers[i], len);
 		if (!pointers[i]) {
-			printf("4) expected a pointer for %i\n", i);
-			printf("FAIL\n");
+			Dumb_alloc_debug_prints("4) expected a pointer for ");
+			Dumb_alloc_debug_printz(i);
+			Dumb_alloc_debug_prints("\nFAIL\n");
 			return 1;
 		}
 		_fill_for_debug(pointers[i], '0' + i, len);
 	}
 
-	printf(" ok");
+	Dumb_alloc_debug_prints(" ok");
 	for (i = 0; i < 10; ++i) {
 		if (pointers[i]) {
-			pointers[i] = D_realloc(pointers[i], 0);
+			pointers[i] = (char *)D_realloc(pointers[i], 0);
 		}
 	}
-	printf(".\n");
+	Dumb_alloc_debug_prints(".\n");
 
 	return 0;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_checkered_realloc())
+TEST_DUMB_ALLOC_MAIN(test_checkered_realloc)

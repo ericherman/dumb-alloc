@@ -31,7 +31,9 @@ check_PROGRAMS=\
  test_big_allocs \
  test_out_of_memory
 
-common_test_sources=$(include_HEADERS) tests/test-dumb-alloc.h
+common_test_sources=$(include_HEADERS) \
+		    tests/dumb-alloc-test.h \
+		    tests/dumb-alloc-test.c
 
 test_simple_SOURCES=$(common_test_sources) tests/test_simple.c
 test_simple_LDADD=libdumb-alloc.la
@@ -77,6 +79,14 @@ else
 BUILD_CFLAGS=-O2 -ggdb -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
 endif
 
+# would rather do "ifeq $(FAUXFREESTANDING)"
+# instead use "./configure --enable-fauxfreestanding"
+if FAUXFREESTANDING
+BUILD_ENV_CFLAGS=-DFAUXFREESTANDING=1 -DDUMB_ALLOC_HOSTED=0
+else
+BUILD_ENV_CFLAGS=
+endif
+
 # I wonder if we need -fno-strict-aliasing ....
 CSTD_CFLAGS=-std=c89 -pedantic
 NOISY_CFLAGS=-Wall -Wextra -Wpedantic -Werror
@@ -86,6 +96,7 @@ AM_CFLAGS=\
  $(CSTD_CFLAGS) \
  $(NOISY_CFLAGS) \
  $(BUILD_CFLAGS) \
+ $(BUILD_ENV_CFLAGS) \
  $(BASE_CFLAGS)
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent

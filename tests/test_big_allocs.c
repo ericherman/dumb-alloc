@@ -3,46 +3,44 @@
 /* Copyright (C) 2020 Eric Herman <eric@freesa.org> */
 /* http://github.com/ericherman/dumb-alloc/ */
 
-#include "test-dumb-alloc.h"
+#include "dumb-alloc-test.h"
 
-#define Test_object_size (4096/4)
-char test_big_allocs(void)
+int test_big_allocs(void)
 {
-	size_t i, j;
-	char *message;
-	char *messages[10];
+	size_t i = 0;
+	size_t j = 0;
+	char *message = NULL;
+	char *messages[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	size_t Test_object_size = dumb_alloc_test_global_buffer_len / 12;
 
-	printf("test_two_alloc ...");
+	Dumb_alloc_debug_prints("test_big_allocs ...");
+	dumb_alloc_test_reset_global();
 
-	dumb_alloc_reset_global();
-
-	for (i = 0; i < 10; ++i) {
-		message = d_malloc(Test_object_size);
+	for (i = 0; i < 8; ++i) {
+		message = (char *)d_malloc(Test_object_size);
 		if (!message) {
 			return 1;
 		}
-		memset(message, ('A' + i), Test_object_size);
-		message[10] = '\0';
+		Dumb_alloc_memset(message, ('A' + i), Test_object_size);
+		message[8] = '\0';
 		messages[i] = message;
 	}
-	for (i = 10; i > 2; i -= 2) {
+	for (i = 8; i > 2; i -= 2) {
 		j = i - 1;
 		message = messages[j];
 		dumb_free(message);
 		messages[j] = NULL;
 	}
-	for (i = 10; i; --i) {
+	for (i = 8; i; --i) {
 		j = i - 1;
 		message = messages[i - 1];
 		dumb_free(message);
 		messages[j] = NULL;
 	}
 
-	printf(" ok");
-	dumb_alloc_reset_global();
-	printf(".\n");
+	Dumb_alloc_debug_prints(" ok.\n");
 
 	return 0;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_big_allocs())
+TEST_DUMB_ALLOC_MAIN(test_big_allocs)

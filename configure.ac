@@ -50,6 +50,19 @@ esac],
 
 AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
 
+AC_ARG_ENABLE(fauxfreestanding,
+AS_HELP_STRING([--enable-fauxfreestanding],
+               [enable functions to support freestanding, default: no]),
+[case "${enableval}" in
+             yes) fauxfreestanding=true ;;
+             no)  fausfreestanding=false ;;
+             *)   AC_MSG_ERROR(\
+		  [bad value ${enableval} for --enable-fauxfreestanding]) ;;
+esac],
+[fauxfreestanding=false])
+
+AM_CONDITIONAL(FAUXFREESTANDING, test x"$fauxfreestanding" = x"true")
+
 AM_INIT_AUTOMAKE([subdir-objects -Werror -Wall])
 AM_PROG_AR
 LT_INIT

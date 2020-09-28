@@ -18,39 +18,34 @@ License (COPYING) along with this library; if not, see:
 
         https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
 */
-#include "test-dumb-alloc.h"
+#include "dumb-alloc-test.h"
 
-char *dumb_dup(const char *s)
+int test_two_alloc(void)
 {
-	char *copy = (char *)d_malloc(strlen(s) + 1);
-	if (copy) {
-		strcpy(copy, s);
-	}
-	return copy;
-}
-
-char test_two_alloc(void)
-{
-	char *message1;
-	char *message2;
+	char *message1 = NULL;
+	char *message2 = NULL;
 	char actual[64];
 
-	printf("test_two_alloc ...");
+	actual[0] = '\0';
 
-	dumb_alloc_reset_global();
+	Dumb_alloc_debug_prints("test_two_alloc ...");
+	dumb_alloc_test_reset_global();
 
-	message1 = dumb_dup("Hello");
-	message2 = dumb_dup("World");
+	message1 = dumb_alloc_test_strdup("Hello, ");
+	message2 = dumb_alloc_test_strdup("World!");
 
-	sprintf(actual, "%s, %s!", message1, message2);
-	if (compare_strings(actual, "Hello, World!")) {
+	Dumb_alloc_test_strcpy(actual, message1);
+	Dumb_alloc_test_strcpy(actual + Dumb_alloc_test_strnlen(actual, 64)
+			       , message2);
+
+	if (dumb_alloc_test_compare_strings(actual, "Hello, World!")) {
 		return 1;
 	}
-	printf(" ok");
+	Dumb_alloc_debug_prints(" ok");
 	dumb_free(message1);
 	dumb_free(message2);
-	printf(".\n");
+	Dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
-TEST_DUMB_ALLOC_MAIN(test_two_alloc())
+TEST_DUMB_ALLOC_MAIN(test_two_alloc)
