@@ -1,3 +1,80 @@
+2020-02-14  Eric Herman <eric@freesa.org>
+
+	Introduce a pool allocator, no use of mmap
+	Fix cases where split or join chunks were not re-linking
+	correctly and debug support, including:
+		0) Introduce sanity checking macros in debug mode
+		1) retain local for-loop variables for easier debug
+		2) Introduce block and chunk alginment to wordsize
+		3) zero-out joined chunks if no longer in use
+		4) improve the debug dump to-string
+		5) FIX _split_chunk, chunk->next was stale
+	Better checking for posix-like mmap
+	Clarify realloc code, set errno = EINVAL if not an allocated ptr
+	Macro: Dumb_alloc_memcpy for memcpy
+
+	* src/dumb-alloc.c: Dumb_alloc_posixy_mmap, alignment, debug, fix
+	* tests/test_checkered_realloc.c: expand test
+	* tests/test_simple.c: add tests for size==0
+	* tests/test_pool.c: new test
+	* Makefile.am: add test_pool
+	* configure.ac: check for mmap, sysconf
+
+2020-02-13  Eric Herman <eric@freesa.org>
+
+	Attempt to support OS X or other POSIXy systems by replacing
+		"#ifdef __linux__" with complex Dumb_alloc_posixy_mmap
+
+	improve tests, cover more cases
+	fix spelling test_out_of_memmory --> test_out_of_memory
+	initialize all stack variables to NULL or 0 for debug
+
+	* tests/test_big_allocs.c: new test
+	* tests/test_out_of_memory.c: expand test
+	* Makefile.am: test_out_of_memory
+	* .gitignore: test_out_of_memory
+
+2020-02-11  Eric Herman <eric@freesa.org>
+
+	clarify OS memory request math
+
+	failed on OSX; linux-only for now
+	fix warnings
+
+	* src/dumb-alloc.c: align_to_page_size, clarify math
+	* tests/test_free.c: fix warnings
+
+2020-02-10  Eric Herman <eric@freesa.org>
+
+	consolidate code into single header and single source file
+	improve some global function names
+	remove the "dump" from the OO-like interface, provide as function
+
+	remove "ham-fisted" OOM testing
+
+	* src/dumb-alloc.h: consolidate from  dumb-alloc-global.h
+	* src/dumb-alloc.c: consolidate from  dumb-alloc-global.c
+	* src/dumb-alloc-global.h: consolidate into dumb-alloc.h
+	* src/dumb-alloc-global.c: consolidate into dumb-alloc.c
+	* src/dumb-os-alloc.c: consolidate into dumb-alloc.c
+	* src/src/dumb-os-alloc.h: remove
+	* tests/test-dumb-alloc.h: verbosity on failure
+	* tests/test_out_of_memmory.c: remove this implementation for now
+	* tests/test_simple.c: add test for calloc
+	* tests/test_two_alloc.c: renamed function, add dump test
+	* tests/test_to_string.c: new test
+	* Makefile.am: test_to_string
+	* configure.ac: check for fprintf
+	* .gitignore: test_to_string, lcov/gcov
+
+
+2017-10-20  Eric Herman <eric@freesa.org>
+
+	add -fsanitize to build
+
+	* Makefile.am: -fsanitize=address,leak,undefined
+
+
 2017-09-03  Eric Herman <eric@freesa.org>
 
 	#ifndef DUMB_ALLOC_MEM_LIMIT, use 1024^3;
