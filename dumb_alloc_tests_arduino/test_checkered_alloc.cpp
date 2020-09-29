@@ -1,0 +1,1 @@
+../tests/test_checkered_alloc.c

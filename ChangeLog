@@ -1,5 +1,24 @@
 2020-09-29  Eric Herman <eric@freesa.org>
 
+	Create an arduino firmware wrapper for the dumb-alloc tests
+
+	* dumb_alloc_tests_arduino/dumb_alloc_tests_arduino.ino: firmware
+	* dumb_alloc_tests_arduino/dumb-alloc.h: (symlink)
+	* dumb_alloc_tests_arduino/dumb-alloc.cpp: (symlink)
+	* dumb_alloc_tests_arduino/dumb-alloc-test.h: (symlink)
+	* dumb_alloc_tests_arduino/dumb-alloc-test.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_big_allocs.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_checkered_alloc.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_checkered_realloc.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_free.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_out_of_memory.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_pool.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_simple.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_to_string.cpp: (symlink)
+	* dumb_alloc_tests_arduino/test_two_alloc.cpp: (symlink)
+
+2020-09-29  Eric Herman <eric@freesa.org>
+
 	API breaking change: to_string now takes a logger object
 	rather than assuming fprintf and a expecting a FILE pointer.
 
