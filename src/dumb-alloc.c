@@ -258,6 +258,8 @@ static struct dumb_alloc_block *_dumb_alloc_init_block(unsigned char *memory,
 	return block;
 }
 
+/* LCOV_EXCL_START */
+
 static void *dumb_alloc_no_alloc(void *context, size_t length)
 {
 	Dumb_alloc_assert(context == NULL);
@@ -268,7 +270,6 @@ static void *dumb_alloc_no_alloc(void *context, size_t length)
 	return NULL;
 }
 
-/* LCOV_EXCL_START */
 /* it is an internal library error if this code is ever called */
 /* however the compiler insists on having *something* for it */
 static int dumb_alloc_no_free(void *context, void *addr, size_t bytes_length)
@@ -280,13 +281,16 @@ static int dumb_alloc_no_free(void *context, void *addr, size_t bytes_length)
 	return -1;
 }
 
-/* LCOV_EXCL_STOP */
-
 static size_t dumb_alloc_no_page_size(void *context)
 {
-	Dumb_alloc_assert(context == NULL);
+	(void)context;
+	/* avoid divide-by-zero */
+	/* also, there are no pages, then any size is fine */
+	/* no need to divide by anything other than 1 */
 	return 1;
 }
+
+/* LCOV_EXCL_STOP */
 
 static struct dumb_alloc_data *_init_data(unsigned char *memory,
 					  size_t region_size,

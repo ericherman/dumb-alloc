@@ -131,11 +131,11 @@ char *dumb_alloc_test_strstr(const char *haystack, const char *needle);
 
 #ifndef TEST_DUMB_ALLOC_MAIN
 #define TEST_DUMB_ALLOC_MAIN(func) \
-size_t dumb_alloc_test_global_buffer_len = 4096; \
-unsigned char dumb_alloc_test_global_buffer_raw[4096]; \
+size_t dumb_alloc_test_global_buffer_len = (64 * 1024); \
+unsigned char dumb_alloc_test_global_buffer_raw[(64 * 1024)]; \
 unsigned char *dumb_alloc_test_global_buffer= dumb_alloc_test_global_buffer_raw; \
-size_t dumb_alloc_test_logbuflen = 1000; \
-char dumb_alloc_test_logbuf_raw[1000]; \
+size_t dumb_alloc_test_logbuflen = 4096; \
+char dumb_alloc_test_logbuf_raw[4096]; \
 char *dumb_alloc_test_logbuf=dumb_alloc_test_logbuf_raw; \
 size_t dumb_alloc_medium_buffer_len = 256; \
 unsigned char dumb_alloc_medium_buffer_raw[256]; \

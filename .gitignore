@@ -4,6 +4,7 @@ test_checkered_realloc
 test_free
 test_out_of_memory
 test_pool
+test_os
 test_simple
 test_to_string
 test_two_alloc
