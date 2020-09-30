@@ -111,6 +111,12 @@ tidy:
 		-T FILE \
 		-T size_t \
 		-T dumb_alloc \
+		-T dumb_alloc_block \
+		-T dumb_alloc_char_buf \
+		-T dumb_alloc_chunk \
+		-T dumb_alloc_data \
+		-T dumb_alloc_log \
+		-T tracking_mem_context_s \
 		`find . -type f -name '*.h' -o -name '*.c'`
 
 spotless:

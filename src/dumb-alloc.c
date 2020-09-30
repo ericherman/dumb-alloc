@@ -77,18 +77,6 @@ static size_t dumb_alloc_os_page_size_linux(void *context);
 #define Dumb_alloc_os_page_size dumb_alloc_no_page_size
 #endif /* Dumb_alloc_os_alloc */
 
-#ifndef DUMB_ALLOC_WORDSIZE
-#ifdef __WORDSIZE
-#define DUMB_ALLOC_WORDSIZE __WORDSIZE
-#else
-#define DUMB_ALLOC_WORDSIZE 16
-#endif /* __WORDSIZE */
-#endif /* DUMB_ALLOC_WORDSIZE */
-
-#define Dumb_alloc_align(x) \
-	(((x) + ((DUMB_ALLOC_WORDSIZE) - 1)) \
-	     & ~((DUMB_ALLOC_WORDSIZE) - 1))
-
 struct dumb_alloc_chunk {
 	unsigned char *start;
 	size_t available_length;

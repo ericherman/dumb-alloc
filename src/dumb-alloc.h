@@ -89,10 +89,10 @@ typedef size_t (*dumb_alloc_os_page_size_func)(void *context);
 
 struct dumb_alloc_log {
 	void *context;
-	int (*puts)(struct dumb_alloc_log * log, const char *str);
-	int (*putz)(struct dumb_alloc_log * log, size_t size);
-	int (*putv)(struct dumb_alloc_log * log, const void *addr);
-	int (*puteol)(struct dumb_alloc_log * log);
+	int (*puts)(struct dumb_alloc_log *log, const char *str);
+	int (*putz)(struct dumb_alloc_log *log, size_t size);
+	int (*putv)(struct dumb_alloc_log *log, const void *addr);
+	int (*puteol)(struct dumb_alloc_log *log);
 };
 
 typedef int (*dumb_alloc_log_func)(void *context, const char *format, ...);
@@ -265,6 +265,21 @@ extern int (*dumb_alloc_die)(void);
 #define DUMB_ALLOC_EINVAL 22
 #endif
 #endif
+
+#ifndef DUMB_ALLOC_WORDSIZE
+#ifdef __WORDSIZE
+#define DUMB_ALLOC_WORDSIZE __WORDSIZE
+#else
+#define DUMB_ALLOC_WORDSIZE (sizeof(size_t))
+#endif /* __WORDSIZE */
+#endif /* DUMB_ALLOC_WORDSIZE */
+
+#define Dumb_alloc_align_to(x, y) \
+	(((x) + ((y) - 1)) \
+	     & ~((y) - 1))
+
+#define Dumb_alloc_align(x) \
+	Dumb_alloc_align_to(x, DUMB_ALLOC_WORDSIZE)
 
 Dumb_alloc_end_C_functions
 #undef Dumb_alloc_end_C_functions
