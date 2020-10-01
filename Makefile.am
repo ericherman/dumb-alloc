@@ -117,7 +117,7 @@ tidy:
 		-T dumb_alloc_data \
 		-T dumb_alloc_log \
 		-T tracking_mem_context_s \
-		`find . -type f -name '*.h' -o -name '*.c'`
+		`find . -type f -name '*.h' -o -name '*.c' -o -name '*.ino'`
 
 spotless:
 	rm -rf `cat .gitignore | sed -e 's/#.*//'`

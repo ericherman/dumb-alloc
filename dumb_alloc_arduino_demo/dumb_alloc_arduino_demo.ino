@@ -1,49 +1,168 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
-/* dumb_alloc_tests_arduino.ino : testing dumb-alloc in arduino */
+/* dumb_alloc_arduino_demo.ino : showing dumb-alloc in arduino */
 /* Copyright (C) 2020 Eric Herman */
-/* https://github.com/ericherman/libefloat */
+/* https://github.com/ericherman/dumb-alloc */
 
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
 #include "dumb-alloc.h"
 
-/* Allocate the buffer used by dumb_alloc */
+// Allocate the buffer used by dumb_alloc
 const size_t global_buffer_len = 512;
 unsigned char global_buffer[global_buffer_len];
+
+// the global dumb_alloc struct used by dumb_alloc() and dumb_free()
 struct dumb_alloc da;
 
-uint16_t loop_delay_ms = (2 * 1000);
-uint32_t loop_count;
+// the buffers[] array will be where we stash allocated memory
+const size_t buffers_len = 10;
+char *buffers[buffers_len];
 
-const size_t max_str_len = 60;
-const size_t strings_len = 10;
-char *strings[strings_len];
+// we will allocate buffers of more than 70 characters in order to
+// fit nicely on an 80 column screen. Note: 70 * 10 is intentionally
+// larger than 512, thus we can not possibly allocate all of the
+// buffers at max length; we should expect some allocation requrests
+// to be denied by dumb_malloc()
+const size_t max_str_len = 70;
+
+uint16_t loop_delay_ms = (2 * 1000);
+uint32_t loops_completed;
 
 void setup(void)
 {
 	Serial.begin(9600);
-
-	// wait to ensure stable Serial
+	// wait to ensure stable Serial initialziaiton
 	delay(50);
 
-	Serial.println("Begin");
-	print_data_sizes();
-
-	for (size_t i = 0; i < global_buffer_len; ++i) {
-		global_buffer[i] = 0;
-	}
-	dumb_alloc_die = crash_and_reboot;
+	// struct initialization includes using some of the buffer
+	// space for internal data structures; the usable space will
+	// be slightly less than this
 	dumb_alloc_init(&da, global_buffer, global_buffer_len);
+
+	// for the global dumb_alloc() and dumb_free() to use our
+	// struct:
 	dumb_alloc_set_global(&da);
 
-	for (size_t i = 0; i < strings_len; ++i) {
-		strings[i] = NULL;
-	}
+	loops_completed = 0;
 
-	loop_count = 0;
+	Serial.println();
+	Serial.println("==================================================");
+	Serial.println();
+	Serial.println("Begin");
+	Serial.println();
+	Serial.println("==================================================");
 }
 
+void loop(void)
+{
+	size_t idx = loops_completed % buffers_len;
+
+	Serial.print(" Starting run number ");
+	Serial.print(loops_completed);
+	Serial.print(" using b[");
+	Serial.print(idx);
+	Serial.println("]");
+	Serial.println("==================================================");
+	Serial.println();
+
+	// if there is a pre-existing string at this index,
+	// free the old string
+	if (buffers[idx]) {
+		Serial.print("freeing ");
+		Serial.print(our_strlen(buffers[idx]) + 1);
+		Serial.println(" bytes");
+		dumb_free(buffers[idx]);
+		buffers[idx] = NULL;
+		Serial.println();
+	}
+	// choose an arbitrary size ... after several loops, we can
+	// expect some pretty fragmented memory
+	size_t buflen = (millis() % max_str_len);
+	if (buflen < 2) {
+		buflen = 2;
+	}
+	Serial.print("requesting allocation of ");
+	Serial.print(buflen);
+	Serial.println(" bytes");
+
+	// Make space for a new buffer by calling dumb_malloc()
+	// however, since the total global buffer size is less than
+	// the total size of all the strings if they are maxium
+	// length, the call to malloc may fail:
+	char *buf = (char *)dumb_malloc(buflen);
+	if (!buf) {
+		Serial.println();
+		Serial.print("COULD NOT ALLOCATE ");
+		Serial.print(buflen);
+		Serial.println(" BYTES");
+	} else {
+		Serial.print("allocated ");
+		Serial.print(buflen);
+		Serial.println(" bytes");
+
+		// we will fill our allocated buffers with a string
+		// of a single character repeating, this will help
+		// give us some confidence that the data is not
+		// getting over-written by other allocations
+		char c = char_for(loops_completed);
+		for (size_t i = 0; i < buflen; ++i) {
+			buf[i] = c;
+		}
+		buf[buflen - 1] = '\0';
+		buffers[idx] = buf;
+	}
+
+	size_t bytes_used = 0;
+	size_t buffers_used = 0;
+	Serial.println();
+	Serial.println("Currently allocated buffers: ");
+	// print all the strings
+	for (size_t i = 0; i < buffers_len; ++i) {
+		Serial.print(" b[");
+		Serial.print(i);
+		Serial.print("] = ");
+		if (buffers[i]) {
+			bytes_used += (1 + our_strlen(buffers[i]));
+			Serial.println(buffers[i]);
+			++buffers_used;
+		} else {
+			Serial.println("(null)");
+		}
+	}
+
+	Serial.println();
+
+	Serial.print(bytes_used);
+	Serial.print(" bytes allocated across ");
+	Serial.print(buffers_used);
+	Serial.println(" active allocations");
+
+	Serial.println();
+	for (size_t i = 0; i < 50; ++i) {
+		Serial.print("=");
+		delay(loop_delay_ms / 50);
+	}
+	Serial.println();
+
+	++loops_completed;
+}
+
+char char_for(size_t n)
+{
+	n = (n % 36);
+	if (n < 10) {
+		return '0' + n;
+	} else {
+		n -= 10;
+		return 'a' + n;
+	}
+}
+
+// a DIY version of the standard C library "strlen" so that we do not need to
+// pull in the bloat of a libc into our firmware just to get this function,
+// this version is simple, even if it is perhaps a bit less efficient than the
+// glibc version.
 size_t our_strlen(const char *s)
 {
 	if (!s) {
@@ -54,127 +173,4 @@ size_t our_strlen(const char *s)
 		++i;
 	}
 	return i;
-}
-
-char char_for(size_t loop_count)
-{
-	size_t cidx = loop_count % (10 + 26);
-
-	char c = '\0';
-	if (cidx < 10) {
-		c = '0' + cidx;
-	} else {
-		c = 'a' + (cidx - 10);
-	}
-	return c;
-}
-
-void loop(void)
-{
-	++loop_count;
-	Serial.println("=================================================");
-	Serial.print(" Starting run #");
-	Serial.println(loop_count);
-	Serial.println("=================================================");
-	Serial.println();
-
-	// free the old string
-	size_t idx = loop_count % strings_len;
-	if (strings[idx]) {
-		Serial.print("freeing ");
-		Serial.print(our_strlen(strings[idx]) + 1);
-		Serial.println(" bytes");
-		dumb_free(strings[idx]);
-		strings[idx] = NULL;
-	}
-	Serial.println();
-	// make a new string:
-	size_t buflen = (loop_count % max_str_len) + 1;
-	Serial.println("allocating ");
-	Serial.print(buflen);
-	Serial.println(" bytes");
-	char *buf = (char *)dumb_malloc(buflen);
-	if (!buf) {
-		Serial.print("COULD NOT ALLOCATE ");
-		Serial.print(buflen);
-		Serial.println(" BYTES");
-	} else {
-		Serial.print("allocated ");
-		Serial.print(buflen);
-		Serial.println(" bytes");
-		char c = char_for(loop_count);
-		for (size_t i = 0; i < buflen; ++i) {
-			buf[i] = c;
-		}
-		buf[buflen - 1] = '\0';
-		strings[idx] = buf;
-	}
-
-	size_t used = 0;
-	size_t objects = 0;
-	Serial.println();
-	Serial.println("Currently allocated objects: ");
-	// print all the strings
-	for (size_t i = 0; i < strings_len; ++i) {
-		Serial.print(" strings[");
-		Serial.print(i);
-		Serial.print("] = ");
-		if (strings[i]) {
-			used += (1 + our_strlen(strings[i]));
-			Serial.println(strings[i]);
-			++objects;
-		} else {
-			Serial.println("(null)");
-		}
-	}
-	Serial.print(used);
-	Serial.print(" bytes allocated across ");
-	Serial.print(objects);
-	Serial.println(" objects");
-
-	Serial.println();
-	Serial.println("=================================================");
-	Serial.println();
-	for (size_t i = 0; i < 20; ++i) {
-		Serial.print(".");
-		delay(loop_delay_ms / 20);
-	}
-
-	Serial.println();
-}
-
-/* calling this NULL function pointer will force a reset */
-int (*bogus_function_crash)(void) = NULL;
-
-int crash_and_reboot(void)
-{
-	Serial.println();
-	Serial.println("Aborting.");
-	delay(10UL * 1000UL);
-	bogus_function_crash();
-	return -1;
-}
-
-void print_data_sizes(void)
-{
-	Serial.print("sizeof(short) == ");
-	Serial.println(sizeof(short));
-
-	Serial.print("sizeof(int) == ");
-	Serial.println(sizeof(int));
-
-	Serial.print("sizeof(long) == ");
-	Serial.println(sizeof(long));
-
-	Serial.print("sizeof(size_t) == ");
-	Serial.println(sizeof(size_t));
-
-	Serial.print("sizeof(float) == ");
-	Serial.println(sizeof(float));
-
-	Serial.print("sizeof(double) == ");
-	Serial.println(sizeof(double));
-
-	Serial.print("DUMB_ALLOC_WORDSIZE = ");
-	Serial.println(DUMB_ALLOC_WORDSIZE);
 }

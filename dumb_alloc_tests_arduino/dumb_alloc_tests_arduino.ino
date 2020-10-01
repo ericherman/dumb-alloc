@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 /* dumb_alloc_tests_arduino.ino : testing dumb-alloc in arduino */
 /* Copyright (C) 2020 Eric Herman */
-/* https://github.com/ericherman/libefloat */
+/* https://github.com/ericherman/dumb-alloc */
 
 #include <Arduino.h>
 #include <HardwareSerial.h>
