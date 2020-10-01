@@ -24,7 +24,7 @@ int test_pool(void)
 	Dumb_alloc_debug_prints("test_pool ...");
 
 	for (i = 0; i < 500; ++i) {
-		dumb_alloc_size_to_hex(buf, 80, i);
+		dumb_alloc_size_to_str(buf, 80, i);
 		len = 1 + Dumb_alloc_test_strnlen(buf, 80);
 		key = (char *)pool.malloc(&pool, len);
 		if (key) {

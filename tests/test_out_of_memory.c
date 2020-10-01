@@ -87,8 +87,8 @@ int test_faux_free(void *context, void *ptr, size_t len)
 	unsigned char *tracking_buffer = NULL;
 	size_t size = 0;
 	int rv = 0;
-	size_t buflen = 22;
-	char buf[22];
+	size_t buflen = _Dumb_alloc_test_u64_hex_buf_len;
+	char buf[_Dumb_alloc_test_u64_hex_buf_len];
 
 	buf[0] = '\0';
 	ctx = (struct tracking_mem_context_s *)context;
@@ -104,7 +104,7 @@ int test_faux_free(void *context, void *ptr, size_t len)
 		Dumb_alloc_debug_printz(__LINE__);
 		Dumb_alloc_debug_prints(": ");
 		Dumb_alloc_debug_prints("BAD MOJO: free(");
-		Dumb_alloc_debug_prints(dumb_alloc_size_to_hex
+		Dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
 					(buf, buflen, (size_t)ptr));
 		Dumb_alloc_debug_prints(") size != len ? ");
 		Dumb_alloc_debug_printz(size);
@@ -144,8 +144,8 @@ int test_out_of_memory_inner(uint32_t malloc_fail_bitmask)
 	size_t j = 0;
 	char *message = NULL;
 	char *messages[40];
-	size_t hexbuflen = 22;
-	char hexbuf[22];
+	size_t hexbuflen = _Dumb_alloc_test_u64_hex_buf_len;
+	char hexbuf[_Dumb_alloc_test_u64_hex_buf_len];
 	unsigned char *initial_page = dumb_alloc_medium_buffer;
 	size_t initial_page_size = dumb_alloc_medium_buffer_len;
 
@@ -153,7 +153,7 @@ int test_out_of_memory_inner(uint32_t malloc_fail_bitmask)
 
 	Dumb_alloc_debug_prints("test_oom_alloc ");
 	Dumb_alloc_debug_prints(" (allocation failure bit-mask: ");
-	Dumb_alloc_debug_prints(dumb_alloc_size_to_hex
+	Dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
 				(hexbuf, hexbuflen, malloc_fail_bitmask));
 	Dumb_alloc_debug_prints(") ...");
 

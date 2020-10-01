@@ -39,7 +39,7 @@ int test_free(void)
 	dumb_free(mem1);
 	if (mem1 == NULL) {
 		Dumb_alloc_debug_prints("\n\texpected not-null, but was");
-		Dumb_alloc_debug_prints(dumb_alloc_size_to_hex
+		Dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
 					(buf, 25, (size_t)mem1));
 		dumb_alloc_to_string(dumb_alloc_get_global(), &logger);
 		Dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
@@ -53,7 +53,7 @@ int test_free(void)
 
 	if (mem3 == NULL) {
 		Dumb_alloc_debug_prints("\n\texpected not-null, but was");
-		Dumb_alloc_debug_prints(dumb_alloc_size_to_hex
+		Dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
 					(buf, 25, (size_t)mem3));
 		dumb_alloc_to_string(dumb_alloc_get_global(), &logger);
 		Dumb_alloc_debug_prints(dumb_alloc_test_logbuf);

@@ -20,6 +20,12 @@ License (COPYING) along with this library; if not, see:
 */
 #include "dumb-alloc.h"
 
+/* space for "0x", 2 for each byte, and the trailing null */
+#define _Dumb_alloc_test_u64_hex_buf_len (2 + (2 * sizeof(uint64_t)) + 1)
+
+/* 22 is big enough to hold size_t of uint64_t */
+#define _Dumb_alloc_test_size_buf_len 22
+
 struct dumb_alloc_char_buf {
 	char *buf;
 	size_t len;
@@ -50,7 +56,8 @@ void dumb_alloc_log_init(struct dumb_alloc_log *log,
 			 char *buf, size_t len);
 
 /* test support functions */
-char *dumb_alloc_size_to_hex(char *buf, size_t len, uint64_t z);
+char *dumb_alloc_u64_to_hex(char *buf, size_t len, uint64_t z);
+char *dumb_alloc_size_to_str(char *buf, size_t len, size_t z);
 int dumb_alloc_test_compare_strings(const char *actual, const char *expected);
 
 /* test wrapper functions for global dumb_malloc and dumb_calloc */

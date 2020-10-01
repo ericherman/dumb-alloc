@@ -186,7 +186,7 @@ extern int printf(const char *format, ...);
 			 printf("%lu", (unsigned long)size)
 #else
 /* guess that somewhere a "printz" function is defined? */
-extern int printz(uint64_t size);
+extern int printz(size_t size);
 #define Dumb_alloc_debug_printz(size) \
 			 printz(size)
 #endif

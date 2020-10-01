@@ -140,13 +140,13 @@ static void dumb_alloc_byte_to_hex_chars(char *hi, char *lo, unsigned char byte)
 	*lo = dumb_alloc_nibble_to_hex((byte & 0x0F));
 }
 
-char *dumb_alloc_size_to_hex(char *buf, size_t len, uint64_t z)
+char *dumb_alloc_u64_to_hex(char *buf, size_t len, uint64_t z)
 {
 	size_t i = 0;
 	size_t pos = 0;
 	size_t u64_bytes = sizeof(uint64_t);
 
-	if (len < (2 + (2 * u64_bytes) + 1)) {
+	if (len < _Dumb_alloc_test_u64_hex_buf_len) {
 		return NULL;
 	}
 
@@ -170,7 +170,7 @@ char *dumb_alloc_size_to_hex(char *buf, size_t len, uint64_t z)
 
 char *dumb_alloc_size_to_str(char *buf, size_t len, size_t z)
 {
-	char tmp[22];
+	char tmp[_Dumb_alloc_test_size_buf_len];
 	size_t i = 0;
 	size_t j = 0;
 
@@ -187,7 +187,7 @@ char *dumb_alloc_size_to_str(char *buf, size_t len, size_t z)
 		return buf;
 	}
 
-	for (i = 0; z && i < 22; ++i) {
+	for (i = 0; z && i < _Dumb_alloc_test_size_buf_len; ++i) {
 		tmp[i] = '0' + (z % 10);
 		z = z / 10;
 	}
@@ -222,18 +222,19 @@ int dumb_alloc_test_append_s(struct dumb_alloc_log *logger, const char *str)
 
 int dumb_alloc_test_append_z(struct dumb_alloc_log *logger, size_t z)
 {
-	char buf[22];
+	char buf[_Dumb_alloc_test_size_buf_len];
 
-	dumb_alloc_size_to_str(buf, 22, z);
+	dumb_alloc_size_to_str(buf, _Dumb_alloc_test_size_buf_len, z);
 
 	return dumb_alloc_test_append_s(logger, buf);
 }
 
 int dumb_alloc_test_append_v(struct dumb_alloc_log *logger, const void *v)
 {
-	char buf[22];
+	char buf[_Dumb_alloc_test_u64_hex_buf_len];
+	uint64_t u64 = (uint64_t) ((size_t)v);
 
-	dumb_alloc_size_to_hex(buf, 22, (size_t)v);
+	dumb_alloc_u64_to_hex(buf, _Dumb_alloc_test_u64_hex_buf_len, u64);
 
 	return dumb_alloc_test_append_s(logger, buf);
 }
