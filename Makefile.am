@@ -73,14 +73,14 @@ test_pool_CFLAGS=$(AM_CFLAGS) -D_GNU_SOURCE
 # would rather do "ifeq $(DEBUG)" but that doesn't work with automake :-(
 # instead use "./configure --enable-debug"
 if DEBUG
-BUILD_CFLAGS=-O0 -ggdb -DDEBUG \
+BUILD_CFLAGS=-O0 -ggdb -DDUMB_ALLOC_DEBUG=1 \
 	-fsanitize=address,leak,undefined \
 	-fno-inline-small-functions \
 	-fkeep-inline-functions \
 	-fkeep-static-functions \
 	--coverage
 else
-BUILD_CFLAGS=-O2 -ggdb -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
+BUILD_CFLAGS=-O2 -ggdb -DNDEBUG -fomit-frame-pointer
 endif
 
 # would rather do "ifeq $(FAUXFREESTANDING)"

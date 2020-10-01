@@ -52,6 +52,7 @@ License (COPYING) along with this library; if not, see:
 #ifndef DUMB_ALLOC_HOSTED
 #define DUMB_ALLOC_HOSTED 0
 #endif
+#define DUMB_ALLOC_DEBUG 0
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #ifndef Dumb_alloc_debug_prints
@@ -206,8 +207,16 @@ extern int (*dumb_alloc_die)(void);
 
 #define Dumb_alloc_no_op() do { (void)0; } while (0)
 
+#ifndef DUMB_ALLOC_DEBUG
+#ifdef NDEBUG
+#define DUMB_ALLOC_DEBUG 0
+#else
+#define DUMB_ALLOC_DEBUG 1
+#endif
+#endif
+
 #ifndef Dumb_alloc_assert
-#ifdef NDEBG
+#if (!(DUMB_ALLOC_DEBUG))
 #define Dumb_alloc_assert(expression) \
 	Dumb_alloc_no_op()
 #endif

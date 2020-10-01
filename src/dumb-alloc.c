@@ -104,7 +104,7 @@ struct dumb_alloc_data {
 	(Dumb_alloc_align(sizeof(struct dumb_alloc_chunk)) \
 	 + DUMB_ALLOC_WORDSIZE)
 
-#ifdef NDEBUG
+#if (!(DUMB_ALLOC_DEBUG))
 #define Dumb_alloc_sanity_check_chunk(chunk)	Dumb_alloc_no_op()
 #define Dumb_alloc_sanity_check_block(block)	Dumb_alloc_no_op()
 #define Dumb_alloc_sanity_check_data(data)	Dumb_alloc_no_op()
@@ -180,7 +180,7 @@ static void _dumb_alloc_sanity_da(struct dumb_alloc *da)
 	Dumb_alloc_assert(da->data != NULL);
 	_dumb_alloc_sanity_data((struct dumb_alloc_data *)da->data);
 }
-#endif
+#endif /* (!(DUMB_ALLOC_DEBUG)) */
 
 struct dumb_alloc *dumb_alloc_global = NULL;
 
@@ -251,6 +251,7 @@ static struct dumb_alloc_block *_dumb_alloc_init_block(unsigned char *memory,
 static void *dumb_alloc_no_alloc(void *context, size_t length)
 {
 	Dumb_alloc_assert(context == NULL);
+	(void)context;
 	if (length == 0) {
 		return NULL;
 	}
@@ -265,6 +266,9 @@ static int dumb_alloc_no_free(void *context, void *addr, size_t bytes_length)
 	Dumb_alloc_assert(!context);
 	Dumb_alloc_assert(!addr);
 	Dumb_alloc_assert(!bytes_length);
+	(void)context;
+	(void)addr;
+	(void)bytes_length;
 	Dumb_alloc_die();
 	return -1;
 }
@@ -415,6 +419,7 @@ static void _dumb_alloc_split_chunk(struct dumb_alloc *da,
 	struct dumb_alloc_chunk *orig_next = NULL;
 
 	Dumb_alloc_sanity_check_da(da);
+	(void)da;
 
 	aligned_request = Dumb_alloc_align(request);
 	from->in_use = 1;
@@ -666,6 +671,7 @@ static void _dumb_alloc_chunk_join_next(struct dumb_alloc *da,
 	size_t additional_available_length = 0;
 
 	Dumb_alloc_sanity_check_da(da);
+	(void)da;
 
 	next = chunk->next;
 	if (!next) {
@@ -930,6 +936,7 @@ static void *dumb_alloc_os_alloc_linux(void *context, size_t length)
 	int offset = 0;
 
 	Dumb_alloc_assert(context == NULL);
+	(void)context;
 	return mmap(addr, length, prot, flags, fd, offset);
 }
 
@@ -937,12 +944,14 @@ static int dumb_alloc_os_free_linux(void *context, void *addr,
 				    size_t bytes_length)
 {
 	Dumb_alloc_assert(context == NULL);
+	(void)context;
 	return munmap(addr, bytes_length);
 }
 
 static size_t dumb_alloc_os_page_size_linux(void *context)
 {
 	Dumb_alloc_assert(context == NULL);
+	(void)context;
 	return (size_t)sysconf(_SC_PAGESIZE);
 }
 
