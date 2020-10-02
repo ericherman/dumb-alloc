@@ -22,7 +22,7 @@ char *buffers[buffers_len];
 // we will allocate buffers of more than 70 characters in order to
 // fit nicely on an 80 column screen. Note: 70 * 10 is intentionally
 // larger than 512, thus we can not possibly allocate all of the
-// buffers at max length; we should expect some allocation requrests
+// buffers at max length; we should expect some allocation requests
 // to be denied by dumb_malloc()
 const size_t max_str_len = 70;
 
