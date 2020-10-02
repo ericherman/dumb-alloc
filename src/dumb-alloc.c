@@ -1,28 +1,39 @@
-/*
-dumb-alloc.c: OO memory allocator
-Copyright (C) 2012, 2017, 2020 Eric Herman <eric@freesa.org>
-
-This work is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later
-version.
-
-This work is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License (COPYING) along with this library; if not, see:
-
-        https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
-*/
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
+/* dumb-alloc.c: OO memory allocator */
+/* Copyright (C) 2012, 2017, 2020 Eric Herman <eric@freesa.org> */
+/* https://github.com/ericherman/dumb-alloc */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include "dumb-alloc.h"
 
-int (*dumb_alloc_die)(void) = NULL;
+/* Some embedded build systems make it easy to add #define to the compile
+ * step, but Arduino's build system is very rigid by default, so we make
+ * some simplifying assumptions. If debug is needed, then this will need
+ * to be edited in the source here. */
+#ifdef ARDUINO
 
+#define Dumb_alloc_posixy_mmap 0
+
+#ifndef DUMB_ALLOC_HOSTED
+#define DUMB_ALLOC_HOSTED 0
+#endif
+
+#ifndef DUMB_ALLOC_DEBUG
+#define DUMB_ALLOC_DEBUG 0
+#endif
+
+#endif /* ARDUINO */
+
+#ifndef DUMB_ALLOC_HOSTED
+#ifdef __STDC_HOSTED__
+#define DUMB_ALLOC_HOSTED __STDC_HOSTED__
+#else
+/* guess? */
+#define DUMB_ALLOC_HOSTED 1
+#endif
+#endif
+
+/* non-posix (e.g.: windows) are not yet supported */
 #ifndef Dumb_alloc_posixy_mmap
 #if ( __APPLE__ && __MACH__ )
 #define Dumb_alloc_posixy_mmap 1
@@ -77,6 +88,46 @@ static size_t dumb_alloc_os_page_size_linux(void *context);
 #define Dumb_alloc_os_page_size dumb_alloc_no_page_size
 #endif /* Dumb_alloc_os_alloc */
 
+#ifndef DUMB_ALLOC_DEBUG
+#ifdef NDEBUG
+#define DUMB_ALLOC_DEBUG 0
+#else
+#define DUMB_ALLOC_DEBUG 1
+#endif
+#endif
+
+#define Dumb_alloc_no_op() do { (void)0; } while (0)
+
+#ifndef Dumb_alloc_assert
+#if (!(DUMB_ALLOC_DEBUG))
+#define Dumb_alloc_assert(expression) \
+	Dumb_alloc_no_op()
+#endif
+#endif
+
+#ifndef Dumb_alloc_assert
+#if DUMB_ALLOC_HOSTED
+#include <assert.h>
+#define Dumb_alloc_assert(expression) \
+		   assert(expression)
+#else
+#define Dumb_alloc_assert(expression) \
+	do { \
+		if (expression) { \
+			Dumb_alloc_no_op(); \
+		} else { \
+			dumb_alloc_debug_prints(__FILE__); \
+			dumb_alloc_debug_prints(":"); \
+			dumb_alloc_debug_printz(__LINE__); \
+			dumb_alloc_debug_prints(": ASSERTION assert("); \
+			dumb_alloc_debug_prints(#expression); \
+			dumb_alloc_debug_prints(") FAILED\n"); \
+			dumb_alloc_debug_die(); \
+		} \
+	} while (0)
+#endif
+#endif
+
 struct dumb_alloc_chunk {
 	unsigned char *start;
 	size_t available_length;
@@ -99,6 +150,21 @@ struct dumb_alloc_data {
 	dumb_alloc_os_page_size_func os_page_size;
 	void *os_context;
 };
+
+#ifndef DUMB_ALLOC_WORDSIZE
+#ifdef __WORDSIZE
+#define DUMB_ALLOC_WORDSIZE __WORDSIZE
+#else
+#define DUMB_ALLOC_WORDSIZE (sizeof(size_t))
+#endif /* __WORDSIZE */
+#endif /* DUMB_ALLOC_WORDSIZE */
+
+#define Dumb_alloc_align_to(x, y) \
+	(((x) + ((y) - 1)) \
+	     & ~((y) - 1))
+
+#define Dumb_alloc_align(x) \
+	Dumb_alloc_align_to(x, DUMB_ALLOC_WORDSIZE)
 
 #define Dumb_alloc_chunk_min_size \
 	(Dumb_alloc_align(sizeof(struct dumb_alloc_chunk)) \
@@ -255,7 +321,7 @@ static void *dumb_alloc_no_alloc(void *context, size_t length)
 	if (length == 0) {
 		return NULL;
 	}
-	Dumb_alloc_set_errno(DUMB_ALLOC_ENOMEM);
+	dumb_alloc_set_err_no_mem();
 	return NULL;
 }
 
@@ -269,7 +335,7 @@ static int dumb_alloc_no_free(void *context, void *addr, size_t bytes_length)
 	(void)context;
 	(void)addr;
 	(void)bytes_length;
-	Dumb_alloc_die();
+	dumb_alloc_debug_die();
 	return -1;
 }
 
@@ -387,7 +453,11 @@ void dumb_alloc_os_free(struct dumb_alloc *os_dumb_allocator)
 void dumb_alloc_init(struct dumb_alloc *da, unsigned char *memory,
 		     size_t length)
 {
-	dumb_alloc_init_custom(da, memory, length, NULL, NULL, NULL, NULL);
+	void *null_context = NULL;
+
+	dumb_alloc_init_custom(da, memory, length, dumb_alloc_no_alloc,
+			       dumb_alloc_no_free, dumb_alloc_no_page_size,
+			       null_context);
 }
 
 static struct dumb_alloc_data *_dumb_alloc_data(struct dumb_alloc *da)
@@ -532,7 +602,7 @@ static void *_dumb_alloc_alloc(struct dumb_alloc *da, size_t request)
 						    requested);
 		if (!memory) {
 			Dumb_alloc_sanity_check_da(da);
-			Dumb_alloc_set_errno(DUMB_ALLOC_ENOMEM);
+			dumb_alloc_set_err_no_mem();
 			return NULL;
 		}
 	}
@@ -566,7 +636,7 @@ static void *_dumb_alloc_calloc(struct dumb_alloc *da, size_t nmemb,
 		Dumb_alloc_sanity_check_da(da);
 		return NULL;
 	}
-	Dumb_alloc_memset(ptr, 0x00, len);
+	dumb_alloc_memset(ptr, 0x00, len);
 
 	Dumb_alloc_sanity_check_da(da);
 	return ptr;
@@ -628,7 +698,7 @@ static void *_dumb_alloc_realloc(struct dumb_alloc *da, void *ptr,
 
 	if (!found) {
 		Dumb_alloc_sanity_check_da(da);
-		Dumb_alloc_set_errno(DUMB_ALLOC_EINVAL);
+		dumb_alloc_set_err_invalid();
 		return NULL;
 	}
 
@@ -643,7 +713,7 @@ static void *_dumb_alloc_realloc(struct dumb_alloc *da, void *ptr,
 		if (chunk->available_length >= request) {
 			Dumb_alloc_assert(old_size > 0);
 			Dumb_alloc_assert(old_size <= chunk->available_length);
-			Dumb_alloc_memset(((char *)ptr) + old_size, 0x00,
+			dumb_alloc_memset(((char *)ptr) + old_size, 0x00,
 					  chunk->available_length - old_size);
 			_dumb_alloc_split_chunk(da, chunk, request);
 			Dumb_alloc_assert(ptr == chunk->start);
@@ -653,8 +723,8 @@ static void *_dumb_alloc_realloc(struct dumb_alloc *da, void *ptr,
 	}
 
 	new_ptr = _dumb_alloc_alloc(da, request);
-	Dumb_alloc_memset(new_ptr, 0x00, request);
-	Dumb_alloc_memcpy(new_ptr, ptr,
+	dumb_alloc_memset(new_ptr, 0x00, request);
+	dumb_alloc_memcpy(new_ptr, ptr,
 			  old_size <= request ? old_size : request);
 
 	_dumb_alloc_free(da, ptr);
@@ -692,7 +762,7 @@ static void _dumb_alloc_chunk_join_next(struct dumb_alloc *da,
 		chunk->next->prev = chunk;
 	}
 	if (!chunk->in_use) {
-		Dumb_alloc_memset(chunk->start, 0x00, chunk->available_length);
+		dumb_alloc_memset(chunk->start, 0x00, chunk->available_length);
 	}
 
 	Dumb_alloc_sanity_check_chunk(chunk);
@@ -767,7 +837,7 @@ static void _dumb_alloc_free(struct dumb_alloc *da, void *ptr)
 					_dumb_alloc_chunk_join_next(da, chunk);
 				}
 				len = chunk->available_length;
-				Dumb_alloc_memset(chunk->start, 0x00, len);
+				dumb_alloc_memset(chunk->start, 0x00, len);
 				_dumb_alloc_release_unused_block(da);
 				Dumb_alloc_sanity_check_da(da);
 				return;
@@ -782,17 +852,17 @@ static void _dumb_alloc_free(struct dumb_alloc *da, void *ptr)
 static void _dumb_alloc_log_sv(struct dumb_alloc_log *log, const char *s,
 			       const void *v)
 {
-	log->puts(log, s);
-	log->putv(log, v);
-	log->puteol(log);
+	log->append_str(log, s);
+	log->append_ptr(log, v);
+	log->append_eol(log);
 }
 
 static void _dumb_alloc_log_sz(struct dumb_alloc_log *log, const char *s,
 			       size_t z)
 {
-	log->puts(log, s);
-	log->putz(log, z);
-	log->puteol(log);
+	log->append_str(log, s);
+	log->append_size(log, z);
+	log->append_eol(log);
 }
 
 static void _dumb_alloc_dump_chunk(struct dumb_alloc_chunk *chunk,
@@ -957,24 +1027,67 @@ static size_t dumb_alloc_os_page_size_linux(void *context)
 
 #endif /* Dumb_alloc_posixy_mmap */
 
-#if Dumb_alloc_diy_memset
-void *dumb_alloc_memset(void *s, int c, size_t n)
+#if (DUMB_ALLOC_HOSTED)
+
+#include <string.h>
+void *(*dumb_alloc_memset)(void *ptr, int val, size_t len) = memset;
+void *(*dumb_alloc_memcpy)(void *dest, const void *src, size_t len) = memcpy;
+
+#include <stdio.h>
+void dumb_alloc_debug_printfs(const char *str)
 {
-	unsigned char *d;
-
-	if (!s) {
-		return NULL;
-	}
-	d = (unsigned char *)s;
-	while (n--) {
-		d[n] = c;
-	}
-	return d;
+	printf("%s", str);
 }
-#endif /* Dumb_alloc_diy_memset */
 
-#if Dumb_alloc_diy_memcpy
-void *dumb_alloc_memcpy(void *d, const void *s, size_t len)
+void (*dumb_alloc_debug_prints)(const char *s) = dumb_alloc_debug_printfs;
+
+void dumb_alloc_debug_printfv(const void *v)
+{
+	printf("%p", v);
+}
+
+void (*dumb_alloc_debug_printv)(const void *v) = dumb_alloc_debug_printfv;
+
+void dumb_alloc_debug_printfz(size_t z)
+{
+	printf("%lu", (unsigned long)z);
+}
+
+void (*dumb_alloc_debug_printz)(size_t z) = dumb_alloc_debug_printfz;
+
+void dumb_alloc_debug_printfeol(void)
+{
+	printf("\n");
+}
+
+void (*dumb_alloc_debug_printeol)(void) = dumb_alloc_debug_printfeol;
+
+#include <stdlib.h>
+void dumb_alloc_exit_failure(void)
+{
+	exit(EXIT_FAILURE);
+}
+
+void (*dumb_alloc_debug_die)(void) = dumb_alloc_exit_failure;
+
+#include <errno.h>
+void dumb_alloc_set_errno_enomem(void)
+{
+	errno = ENOMEM;
+}
+
+void (*dumb_alloc_set_err_no_mem)(void) = dumb_alloc_set_errno_enomem;
+
+void dumb_alloc_set_errno_einval(void)
+{
+	errno = EINVAL;
+}
+
+void (*dumb_alloc_set_err_invalid)(void) = dumb_alloc_set_errno_einval;
+
+#else
+
+void *dumb_alloc_diy_memcpy(void *d, const void *s, size_t len)
 {
 	size_t i;
 	unsigned char *dest;
@@ -992,4 +1105,61 @@ void *dumb_alloc_memcpy(void *d, const void *s, size_t len)
 	}
 	return d;
 }
-#endif /* Dumb_alloc_diy_memcpy */
+
+void *(*dumb_alloc_memcpy)(void *dest, const void *src, size_t len) =
+    dumb_alloc_diy_memcpy;
+
+void *dumb_alloc_diy_memset(void *s, int c, size_t n)
+{
+	unsigned char *d;
+
+	if (!s) {
+		return NULL;
+	}
+	d = (unsigned char *)s;
+	while (n--) {
+		d[n] = c;
+	}
+	return d;
+}
+
+void *(*dumb_alloc_memset)(void *ptr, int val, size_t len) =
+    dumb_alloc_diy_memset;
+
+void dumb_alloc_no_errno(void)
+{
+}
+
+void (*dumb_alloc_set_err_no_mem)(void) = dumb_alloc_no_errno;
+void (*dumb_alloc_set_err_invalid)(void) = dumb_alloc_no_errno;
+
+void dumb_alloc_no_prints(const char *s)
+{
+	(void)s;
+}
+
+void (*dumb_alloc_debug_prints)(const char *s) = dumb_alloc_no_prints;
+
+void dumb_alloc_no_printv(const void *v)
+{
+	(void)v;
+}
+
+void (*dumb_alloc_debug_printv)(const void *v) = dumb_alloc_no_printv;
+
+void dumb_alloc_no_printz(size_t z)
+{
+	(void)z;
+}
+
+void (*dumb_alloc_debug_printz)(size_t z) = dumb_alloc_no_printz;
+
+void dumb_alloc_no_printeol(void)
+{
+}
+
+void (*dumb_alloc_debug_printeol)(void) = dumb_alloc_no_printeol;
+
+void (*dumb_alloc_debug_die)(void) = NULL;
+
+#endif

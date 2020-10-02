@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: LGPL-3.0-or-later */
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
 /* test_big_allocs.c: essentially basic malloc/free test */
 /* Copyright (C) 2020 Eric Herman <eric@freesa.org> */
 /* http://github.com/ericherman/dumb-alloc/ */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include "dumb-alloc-test.h"
 
@@ -13,7 +14,7 @@ int test_big_allocs(void)
 	char *messages[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	size_t Test_object_size = dumb_alloc_test_global_buffer_len / 12;
 
-	Dumb_alloc_debug_prints("test_big_allocs ...");
+	dumb_alloc_debug_prints("test_big_allocs ...");
 	dumb_alloc_test_reset_global();
 
 	for (i = 0; i < 8; ++i) {
@@ -21,7 +22,7 @@ int test_big_allocs(void)
 		if (!message) {
 			return 1;
 		}
-		Dumb_alloc_memset(message, ('A' + i), Test_object_size);
+		dumb_alloc_memset(message, ('A' + i), Test_object_size);
 		message[8] = '\0';
 		messages[i] = message;
 	}
@@ -38,7 +39,7 @@ int test_big_allocs(void)
 		messages[j] = NULL;
 	}
 
-	Dumb_alloc_debug_prints(" ok.\n");
+	dumb_alloc_debug_prints(" ok.\n");
 
 	return 0;
 }

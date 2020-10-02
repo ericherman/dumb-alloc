@@ -1,23 +1,9 @@
-/*
-test-dumb-alloc.c: common test functions
-Copyright (C) 2012, 2017 Eric Herman <eric@freesa.org>
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
+/* dumb-alloc-test.c: common test functions */
+/* Copyright (C) 2012, 2017, 2020 Eric Herman <eric@freesa.org> */
+/* https://github.com/ericherman/dumb-alloc */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
-This work is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later
-version.
-
-This work is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License (COPYING) along with this library; if not, see:
-
-        https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
-*/
 #include "dumb-alloc-test.h"
 
 struct dumb_alloc_log logger;
@@ -27,7 +13,7 @@ size_t faux_pages_used;
 
 void dumb_alloc_test_reset_global(void)
 {
-	Dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
+	dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
 			  dumb_alloc_test_global_buffer_len);
 	dumb_alloc_init(&da, dumb_alloc_test_global_buffer,
 			dumb_alloc_test_global_buffer_len);
@@ -258,10 +244,10 @@ void dumb_alloc_log_init(struct dumb_alloc_log *logger,
 
 	logger->context = log_context;
 
-	logger->puts = dumb_alloc_test_append_s;
-	logger->putz = dumb_alloc_test_append_z;
-	logger->putv = dumb_alloc_test_append_v;
-	logger->puteol = dumb_alloc_test_append_eol;
+	logger->append_str = dumb_alloc_test_append_s;
+	logger->append_size = dumb_alloc_test_append_z;
+	logger->append_ptr = dumb_alloc_test_append_v;
+	logger->append_eol = dumb_alloc_test_append_eol;
 }
 
 void *d_malloc(size_t size)
@@ -273,11 +259,11 @@ void *d_malloc(size_t size)
 
 	ptr = dumb_malloc(size);
 	if (!ptr) {
-		Dumb_alloc_debug_prints("\n");
-		Dumb_alloc_debug_prints("alloc returned NULL\n");
+		dumb_alloc_debug_prints("\n");
+		dumb_alloc_debug_prints("alloc returned NULL\n");
 		dumb_alloc_to_string(dumb_alloc_get_global(), &logger);
-		Dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
-		Dumb_alloc_debug_prints("\nFAIL\n");
+		dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
+		dumb_alloc_debug_prints("\nFAIL\n");
 	}
 	return ptr;
 }
@@ -291,11 +277,11 @@ void *d_calloc(size_t num, size_t size)
 
 	ptr = dumb_calloc(num, size);
 	if (!ptr) {
-		Dumb_alloc_debug_prints("\n");
-		Dumb_alloc_debug_prints("alloc returned NULL\n");
+		dumb_alloc_debug_prints("\n");
+		dumb_alloc_debug_prints("alloc returned NULL\n");
 		dumb_alloc_to_string(dumb_alloc_get_global(), &logger);
-		Dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
-		Dumb_alloc_debug_prints("\nFAIL\n");
+		dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
+		dumb_alloc_debug_prints("\nFAIL\n");
 	}
 	return ptr;
 }
@@ -312,15 +298,15 @@ int dumb_alloc_test_compare_strings(const char *actual, const char *expected)
 		return 0;
 	}
 
-	Dumb_alloc_debug_prints("\n");
-	Dumb_alloc_debug_prints("expected (");
-	Dumb_alloc_debug_prints(expected);
-	Dumb_alloc_debug_prints("' but was '");
-	Dumb_alloc_debug_prints(actual);
-	Dumb_alloc_debug_prints("'\n");
+	dumb_alloc_debug_prints("\n");
+	dumb_alloc_debug_prints("expected (");
+	dumb_alloc_debug_prints(expected);
+	dumb_alloc_debug_prints("' but was '");
+	dumb_alloc_debug_prints(actual);
+	dumb_alloc_debug_prints("'\n");
 	dumb_alloc_to_string(dumb_alloc_get_global(), &logger);
-	Dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
-	Dumb_alloc_debug_prints("\nFAIL\n");
+	dumb_alloc_debug_prints(dumb_alloc_test_logbuf);
+	dumb_alloc_debug_prints("\nFAIL\n");
 	return 1;
 }
 

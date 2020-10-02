@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: LGPL-3.0-or-later */
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
 /* test_to_string.c: test for an OO memory allocator */
 /* Copyright (C) 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/dumb_alloc */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include "dumb-alloc-test.h"
 
@@ -33,11 +34,11 @@ int test_to_string(void)
 	for (i = 0; seek[i]; ++i) {
 		found = Dumb_alloc_test_strstr(logbuf, seek[i]);
 		if (!found) {
-			Dumb_alloc_debug_prints("did not find '");
-			Dumb_alloc_debug_prints(seek[i]);
-			Dumb_alloc_debug_prints("' in:\n");
-			Dumb_alloc_debug_prints(logbuf);
-			Dumb_alloc_debug_prints("\n");
+			dumb_alloc_debug_prints("did not find '");
+			dumb_alloc_debug_prints(seek[i]);
+			dumb_alloc_debug_prints("' in:\n");
+			dumb_alloc_debug_prints(logbuf);
+			dumb_alloc_debug_prints("\n");
 			++failures;
 		}
 	}

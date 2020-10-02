@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: LGPL-3.0-or-later */
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
 /* test_out_of_memory.c: testing sanity after allocation failures */
 /* Copyright (C) 2020 Eric Herman <eric@freesa.org> */
 /* http://github.com/ericherman/dumb-alloc/ */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include "dumb-alloc-test.h"
 
@@ -57,20 +58,20 @@ void *test_faux_alloc(void *context, size_t size)
 		return NULL;
 	}
 
-	Dumb_alloc_memcpy(tracking_buffer, &size, sizeof(size_t));
+	dumb_alloc_memcpy(tracking_buffer, &size, sizeof(size_t));
 	++ctx->allocs;
 	ctx->alloc_bytes += size;
 	if (ctx->free_bytes > ctx->alloc_bytes) {
-		Dumb_alloc_debug_prints(__FILE__);
-		Dumb_alloc_debug_prints(":");
-		Dumb_alloc_debug_printz(__LINE__);
-		Dumb_alloc_debug_prints(": ");
-		Dumb_alloc_debug_prints
+		dumb_alloc_debug_prints(__FILE__);
+		dumb_alloc_debug_prints(":");
+		dumb_alloc_debug_printz(__LINE__);
+		dumb_alloc_debug_prints(": ");
+		dumb_alloc_debug_prints
 		    ("BAD MOJO: free_bytes > alloc_bytes?! (");
-		Dumb_alloc_debug_printz(ctx->free_bytes);
-		Dumb_alloc_debug_prints(" > ");
-		Dumb_alloc_debug_printz(ctx->alloc_bytes);
-		Dumb_alloc_debug_prints(")\n");
+		dumb_alloc_debug_printz(ctx->free_bytes);
+		dumb_alloc_debug_prints(" > ");
+		dumb_alloc_debug_printz(ctx->alloc_bytes);
+		dumb_alloc_debug_prints(")\n");
 	} else {
 		used = ctx->alloc_bytes - ctx->free_bytes;
 		if (used > ctx->max_used) {
@@ -97,38 +98,38 @@ int test_faux_free(void *context, void *ptr, size_t len)
 		return -1;
 	}
 	tracking_buffer = ((unsigned char *)ptr) - sizeof(size_t);
-	Dumb_alloc_memcpy(&size, tracking_buffer, sizeof(size_t));
+	dumb_alloc_memcpy(&size, tracking_buffer, sizeof(size_t));
 	if (size != len) {
-		Dumb_alloc_debug_prints(__FILE__);
-		Dumb_alloc_debug_prints(":");
-		Dumb_alloc_debug_printz(__LINE__);
-		Dumb_alloc_debug_prints(": ");
-		Dumb_alloc_debug_prints("BAD MOJO: free(");
-		Dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
+		dumb_alloc_debug_prints(__FILE__);
+		dumb_alloc_debug_prints(":");
+		dumb_alloc_debug_printz(__LINE__);
+		dumb_alloc_debug_prints(": ");
+		dumb_alloc_debug_prints("BAD MOJO: free(");
+		dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
 					(buf, buflen, (size_t)ptr));
-		Dumb_alloc_debug_prints(") size != len ? ");
-		Dumb_alloc_debug_printz(size);
-		Dumb_alloc_debug_prints(" != ");
-		Dumb_alloc_debug_printz(len);
-		Dumb_alloc_debug_prints("?!\n");
+		dumb_alloc_debug_prints(") size != len ? ");
+		dumb_alloc_debug_printz(size);
+		dumb_alloc_debug_prints(" != ");
+		dumb_alloc_debug_printz(len);
+		dumb_alloc_debug_prints("?!\n");
 
 		rv = -1;
 	}
 	ctx->free_bytes += size;
 	++ctx->frees;
 	if (ctx->free_bytes > ctx->alloc_bytes) {
-		Dumb_alloc_debug_prints(__FILE__);
-		Dumb_alloc_debug_prints(":");
-		Dumb_alloc_debug_printz(__LINE__);
-		Dumb_alloc_debug_prints(": ");
-		Dumb_alloc_debug_prints
+		dumb_alloc_debug_prints(__FILE__);
+		dumb_alloc_debug_prints(":");
+		dumb_alloc_debug_printz(__LINE__);
+		dumb_alloc_debug_prints(": ");
+		dumb_alloc_debug_prints
 		    ("BAD MOJO: free_bytes > alloc_bytes?! (");
-		Dumb_alloc_debug_printz(ctx->free_bytes);
-		Dumb_alloc_debug_prints(" > ");
-		Dumb_alloc_debug_printz(ctx->alloc_bytes);
-		Dumb_alloc_debug_prints(") just freed \n");
-		Dumb_alloc_debug_printz(size);
-		Dumb_alloc_debug_prints("\n");
+		dumb_alloc_debug_printz(ctx->free_bytes);
+		dumb_alloc_debug_prints(" > ");
+		dumb_alloc_debug_printz(ctx->alloc_bytes);
+		dumb_alloc_debug_prints(") just freed \n");
+		dumb_alloc_debug_printz(size);
+		dumb_alloc_debug_prints("\n");
 		rv = -1;
 	}
 	return rv;
@@ -151,16 +152,16 @@ int test_out_of_memory_inner(uint32_t malloc_fail_bitmask)
 
 	faux_pages_used = 0;
 
-	Dumb_alloc_debug_prints("test_oom_alloc ");
-	Dumb_alloc_debug_prints(" (allocation failure bit-mask: ");
-	Dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
+	dumb_alloc_debug_prints("test_oom_alloc ");
+	dumb_alloc_debug_prints(" (allocation failure bit-mask: ");
+	dumb_alloc_debug_prints(dumb_alloc_u64_to_hex
 				(hexbuf, hexbuflen, malloc_fail_bitmask));
-	Dumb_alloc_debug_prints(") ...");
+	dumb_alloc_debug_prints(") ...");
 
-	Dumb_alloc_memset(&mctx, 0, sizeof(struct tracking_mem_context_s));
+	dumb_alloc_memset(&mctx, 0, sizeof(struct tracking_mem_context_s));
 	mctx.attempts_to_fail_bitmask = malloc_fail_bitmask;
 
-	Dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
+	dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
 			  dumb_alloc_test_global_buffer_len);
 
 	dumb_alloc_init_custom(&da, initial_page, initial_page_size,
@@ -170,7 +171,7 @@ int test_out_of_memory_inner(uint32_t malloc_fail_bitmask)
 	for (i = 0; i < 10; ++i) {
 		message = (char *)da.malloc(&da, 183);
 		if (message) {
-			Dumb_alloc_memset(message, ('A' + i), 183);
+			dumb_alloc_memset(message, ('A' + i), 183);
 			message[10] = '\0';
 			messages[i] = message;
 		}
@@ -191,7 +192,7 @@ int test_out_of_memory_inner(uint32_t malloc_fail_bitmask)
 	failures += ((mctx.frees == mctx.allocs) ? 0 : 1);
 	failures += ((mctx.free_bytes == mctx.alloc_bytes) ? 0 : 1);
 
-	Dumb_alloc_debug_prints(failures ? " FAIL!\n" : " ok.\n");
+	dumb_alloc_debug_prints(failures ? " FAIL!\n" : " ok.\n");
 
 	return failures;
 }

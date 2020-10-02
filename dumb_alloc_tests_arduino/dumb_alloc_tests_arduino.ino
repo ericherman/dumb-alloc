@@ -2,12 +2,33 @@
 /* dumb_alloc_tests_arduino.ino : testing dumb-alloc in arduino */
 /* Copyright (C) 2020 Eric Herman */
 /* https://github.com/ericherman/dumb-alloc */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
 /* calling this NULL function pointer will force a reset */
 int (*bogus_function_crash)(void) = NULL;
+
+void serial_prints(const char *s)
+{
+	Serial.print(s);
+}
+
+void serial_printv(const void *v)
+{
+	Serial.print((size_t)v);
+}
+
+void serial_printz(size_t z)
+{
+	Serial.print(z);
+}
+
+void serial_printeol(void)
+{
+	Serial.println();
+}
 
 /* Allocate the big resources needed by the tests */
 const size_t global_buffer_len = 2048;
@@ -44,18 +65,21 @@ extern int test_two_alloc(void);
 /* setup/loop globals */
 uint32_t loop_count;
 
-int crash_and_reboot(void)
+void crash_and_reboot(void)
 {
 	Serial.println();
 	Serial.println("Aborting.");
 	delay(3000);
 	bogus_function_crash();
-	return -1;
 }
 
 void setup(void)
 {
-	dumb_alloc_die = crash_and_reboot;
+	dumb_alloc_debug_prints = serial_prints;
+	dumb_alloc_debug_printv = serial_printv;
+	dumb_alloc_debug_printz = serial_printz;
+	dumb_alloc_debug_printeol = serial_printeol;
+	dumb_alloc_debug_die = crash_and_reboot;
 
 	Serial.begin(9600);
 

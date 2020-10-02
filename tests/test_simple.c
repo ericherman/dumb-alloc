@@ -1,30 +1,16 @@
-/*
-test_simple.c: simple test of malloc and free
-Copyright (C) 2012, 2017 Eric Herman <eric@freesa.org>
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
+/* test_simple.c: simple test of malloc and free */
+/* Copyright (C) 2012, 2017, 2020 Eric Herman <eric@freesa.org> */
+/* https://github.com/ericherman/dumb-alloc */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
-This work is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later
-version.
-
-This work is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License (COPYING) along with this library; if not, see:
-
-        https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
-*/
 #include "dumb-alloc-test.h"
 
 int test_simple_malloc_size_0(void)
 {
 	void *actual = NULL;
 
-	Dumb_alloc_debug_prints("test_simple_malloc_size_0 ...");
+	dumb_alloc_debug_prints("test_simple_malloc_size_0 ...");
 	dumb_alloc_test_reset_global();
 
 	actual = dumb_malloc(0);
@@ -32,7 +18,7 @@ int test_simple_malloc_size_0(void)
 		return 1;
 	}
 
-	Dumb_alloc_debug_prints(" ok\n");
+	dumb_alloc_debug_prints(" ok\n");
 	return 0;
 
 }
@@ -43,7 +29,7 @@ int test_simple_calloc_size_0(void)
 	size_t nmemb = 0;
 	size_t size = 0;
 
-	Dumb_alloc_debug_prints("test_simple_calloc_size_0 ...");
+	dumb_alloc_debug_prints("test_simple_calloc_size_0 ...");
 	dumb_alloc_test_reset_global();
 
 	nmemb = 10;
@@ -60,7 +46,7 @@ int test_simple_calloc_size_0(void)
 		return 1;
 	}
 
-	Dumb_alloc_debug_prints(" ok\n");
+	dumb_alloc_debug_prints(" ok\n");
 	return 0;
 
 }
@@ -71,7 +57,7 @@ int test_simple_malloc(void)
 	char *actual = NULL;
 	size_t i = 0;
 
-	Dumb_alloc_debug_prints("test_simple_malloc ...");
+	dumb_alloc_debug_prints("test_simple_malloc ...");
 	dumb_alloc_test_reset_global();
 
 	for (i = 0; i < 10; ++i) {
@@ -89,9 +75,9 @@ int test_simple_malloc(void)
 		dumb_free(actual);
 	}
 
-	Dumb_alloc_debug_prints(" ok");
+	dumb_alloc_debug_prints(" ok");
 	dumb_alloc_set_global(NULL);
-	Dumb_alloc_debug_prints(".\n");
+	dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
@@ -100,7 +86,7 @@ int test_simple_calloc(void)
 	const char *expected = NULL;
 	char *actual = NULL;
 
-	Dumb_alloc_debug_prints("test_simple_calloc ...");
+	dumb_alloc_debug_prints("test_simple_calloc ...");
 	dumb_alloc_test_reset_global();
 
 	expected = "";
@@ -115,9 +101,9 @@ int test_simple_calloc(void)
 		return 4;
 	}
 
-	Dumb_alloc_debug_prints(" ok");
+	dumb_alloc_debug_prints(" ok");
 	dumb_free(actual);
-	Dumb_alloc_debug_prints(".\n");
+	dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 

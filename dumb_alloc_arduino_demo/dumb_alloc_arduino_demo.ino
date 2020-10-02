@@ -2,6 +2,7 @@
 /* dumb_alloc_arduino_demo.ino : showing dumb-alloc in arduino */
 /* Copyright (C) 2020 Eric Herman */
 /* https://github.com/ericherman/dumb-alloc */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include <Arduino.h>
 #include <HardwareSerial.h>
@@ -19,8 +20,8 @@ struct dumb_alloc da;
 const size_t buffers_len = 10;
 char *buffers[buffers_len];
 
-// we will allocate buffers of more than 70 characters in order to
-// fit nicely on an 80 column screen. Note: 70 * 10 is intentionally
+// we will allocate buffers of no more than 70 characters in order to
+// display nicely on an 80 column screen. However 70 * 10 is obvioulsy
 // larger than 512, thus we can not possibly allocate all of the
 // buffers at max length; we should expect some allocation requrests
 // to be denied by dumb_malloc()

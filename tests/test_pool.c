@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: LGPL-3.0-or-later */
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
 /* test_pool.c: showing a using as a pool allocator*/
 /* Copyright (C) 2020 Eric Herman <eric@freesa.org> */
 /* http://github.com/ericherman/dumb-alloc/ */
+/* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 
 #include "dumb-alloc-test.h"
 
@@ -15,13 +16,13 @@ int test_pool(void)
 	size_t i = 0;
 	size_t len = 0;
 
-	Dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
+	dumb_alloc_memset(dumb_alloc_test_global_buffer, 0x00,
 			  dumb_alloc_test_global_buffer_len);
 
 	dumb_alloc_init(&pool, dumb_alloc_test_global_buffer,
 			dumb_alloc_test_global_buffer_len);
 
-	Dumb_alloc_debug_prints("test_pool ...");
+	dumb_alloc_debug_prints("test_pool ...");
 
 	for (i = 0; i < 500; ++i) {
 		dumb_alloc_size_to_str(buf, 80, i);
@@ -42,8 +43,8 @@ int test_pool(void)
 		pool.free(&pool, keys[i]);
 	}
 
-	Dumb_alloc_debug_prints(" ok");
-	Dumb_alloc_debug_prints(".\n");
+	dumb_alloc_debug_prints(" ok");
+	dumb_alloc_debug_prints(".\n");
 	return 0;
 }
 
