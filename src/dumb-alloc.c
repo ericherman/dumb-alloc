@@ -551,17 +551,10 @@ static size_t dumb_alloc_align_to_page_size(struct dumb_alloc_data *data,
 					    size_t wanted)
 {
 	size_t page_size = 0;
-	size_t odd = 0;
-	size_t pages_wanted = 0;
-	size_t unaligned_requested = 0;
 	size_t requested = 0;
 
 	page_size = data->os_page_size(data->os_context);
-
-	odd = (wanted % page_size == 0) ? 0 : 1;
-	pages_wanted = (wanted / page_size) + odd;
-	unaligned_requested = page_size * pages_wanted;
-	requested = Dumb_alloc_align(unaligned_requested);
+	requested = Dumb_alloc_align_to(wanted, page_size);
 
 	return requested;
 }
