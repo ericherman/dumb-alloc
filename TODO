@@ -1,7 +1,7 @@
-1) replace hardcoded memory limit
-2) deal with un-allocating the additional blocks for short-lived allocators
-3) add a destroy/free_all
-4) consider creating pools in global:
+* add a test while allocates multiple blocks,
+  then check that all blocks freed upon destruction
+
+* consider creating pools in global:
     pool[ 0]          0 -       2048
     pool[ 1]       2049 -       4096
     pool[ 2]       4097 -       8192
