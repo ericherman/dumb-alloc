@@ -41,8 +41,6 @@ struct dumb_alloc_log {
 	int (*append_eol)(struct dumb_alloc_log *log);
 };
 
-typedef int (*dumb_alloc_log_func)(void *context, const char *format, ...);
-
 Dumb_alloc_begin_C_functions
 #undef Ehht_begin_C_functions
 /* initializer useful for buffer or stack-based allocation */
